@@ -1,0 +1,17 @@
+instrument=GXB01373
+position=GA50000
+flow_cell_id=FAL10194
+sample_id=20191007_P0_EucalyptusNarrowSrexlPD
+protocol_group_id=20191007_P0_EucalyptusNarrow
+protocol=d770a64c26d100a5c28df6238b5894a5a461bd9b
+protocol_run_id=78a08fd1-d7ca-445b-bf76-a571c12cb0e2
+acquisition_run_id=ff0f9fcd18f6fbf61e1e156a3844e257f316dde9
+started=2019-10-07T16:33:13.679246+03:00
+acquisition_stopped=2019-10-08T17:17:11.572299+03:00
+processing_stopped=2019-10-08T17:17:11.572356+03:00
+basecalling_enabled=1
+sequencing_summary_file=GXB01373_20191007_162948_FAL10194_gridion_sequencing_run_20191007_P0_EucalyptusNarrowSrexlPD_sequencing_summary.txt
+fast5_files_in_final_dest=156
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=156
+fastq_files_in_fallback=0

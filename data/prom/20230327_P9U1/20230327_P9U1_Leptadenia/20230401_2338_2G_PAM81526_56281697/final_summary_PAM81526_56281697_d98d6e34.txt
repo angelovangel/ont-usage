@@ -1,0 +1,17 @@
+instrument=PC24B323
+position=2G
+flow_cell_id=PAM81526
+sample_id=20230327_P9U1_Leptadenia
+protocol_group_id=20230327_P9U1
+protocol=sequencing/sequencing_PRO114_DNA_e8_2_260T:FLO-PRO114M:SQK-ULK114:260
+protocol_run_id=56281697-c955-4fe4-8a3b-3244bb1fc470
+acquisition_run_id=d98d6e346cd85b15ae7dfe4e1f2b0914c6e1b972
+started=2023-04-01T23:44:36.617803+03:00
+acquisition_stopped=2023-04-03T08:36:13.385435+03:00
+processing_stopped=2023-04-03T08:36:28.811214+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_PAM81526_56281697_d98d6e34.txt
+fast5_files_in_final_dest=1
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=213
+fastq_files_in_fallback=0

@@ -1,0 +1,17 @@
+instrument=GXB03401
+position=X1
+flow_cell_id=FAS35937
+sample_id=2210_MA_bacterialgenomes
+protocol_group_id=2210_MA_bacterialgenomes
+protocol=sequencing/sequencing_MIN106_DNA:FLO-MIN106:SQK-RBK110-96
+protocol_run_id=4ce07162-17af-47fc-ac87-de4d9a7dd72c
+acquisition_run_id=cc01d113d1243f8db86fe9cd6c778cb6a4e0cac5
+started=2022-10-11T14:06:08.564872+03:00
+acquisition_stopped=2022-10-14T14:06:12.787097+03:00
+processing_stopped=2022-10-14T14:06:36.420450+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_FAS35937_cc01d113.txt
+fast5_files_in_final_dest=780
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=780
+fastq_files_in_fallback=0

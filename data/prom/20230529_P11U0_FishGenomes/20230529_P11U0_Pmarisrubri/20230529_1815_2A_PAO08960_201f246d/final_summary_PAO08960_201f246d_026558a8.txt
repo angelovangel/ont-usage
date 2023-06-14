@@ -1,0 +1,17 @@
+instrument=PC24B323
+position=2A
+flow_cell_id=PAO08960
+sample_id=20230529_POU1_Pmarisrubri
+protocol_group_id=20230529_POU1_FishGenomes
+protocol=sequencing/sequencing_PRO114_DNA_e8_2_400K:FLO-PRO114M:SQK-LSK114:400
+protocol_run_id=201f246d-5e3d-495f-926f-3d617067d8fb
+acquisition_run_id=026558a81ad2f554a479e9ab4cff6340a82ef787
+started=2023-05-29T18:21:20.643894+03:00
+acquisition_stopped=2023-05-30T14:44:22.126731+03:00
+processing_stopped=2023-05-30T19:15:11.179886+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_PAO08960_201f246d_026558a8.txt
+fast5_files_in_final_dest=4682
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=4736
+fastq_files_in_fallback=0

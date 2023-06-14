@@ -1,0 +1,17 @@
+instrument=GXB03401
+position=X2
+flow_cell_id=FAU10687
+sample_id=20230418_P4U2_P0U0_H1_DirectRNA
+protocol_group_id=20230418_P4U2
+protocol=sequencing/sequencing_MIN106_RNA:FLO-MIN106:SQK-RNA002
+protocol_run_id=0f246630-aee4-4210-838e-6f2adcb2b399
+acquisition_run_id=e029aeba8944dea374eee0e4385d4f2636789a4c
+started=2023-04-20T08:19:49.959342+03:00
+acquisition_stopped=2023-04-21T19:19:54.654840+03:00
+processing_stopped=2023-04-21T19:19:57.820997+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_FAU10687_0f246630_e029aeba.txt
+fast5_files_in_final_dest=0
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=2
+fastq_files_in_fallback=0

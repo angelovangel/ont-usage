@@ -1,0 +1,17 @@
+instrument=GXB03401
+position=X2
+flow_cell_id=FAQ04302
+sample_id=20221025_P0U0_Zymmo_109
+protocol_group_id=20221025_P0U0_Zymo
+protocol=sequencing/sequencing_MIN106_DNA:FLO-MIN106:SQK-LSK109
+protocol_run_id=3d299d24-9d9a-4af9-8ada-1d960efd6347
+acquisition_run_id=9420659c319550b78e9ca35288e19cea164d9f5d
+started=2022-10-25T12:33:40.706564+03:00
+acquisition_stopped=2022-10-26T11:55:45.714362+03:00
+processing_stopped=2022-10-26T11:56:37.995532+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_FAQ04302_9420659c.txt
+fast5_files_in_final_dest=384
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=384
+fastq_files_in_fallback=0

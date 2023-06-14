@@ -1,0 +1,17 @@
+instrument=PC24B323
+position=1E
+flow_cell_id=PAM35260
+sample_id=20230510_P4U2_P0U0_A31
+protocol_group_id=20230510_P4U2_P0U0_A-H
+protocol=sequencing/sequencing_PRO002_RNA:FLO-PRO002:SQK-RNA002
+protocol_run_id=ecf5cd9e-5e87-493f-94fc-519de9e8a4c2
+acquisition_run_id=e95c8b5aeb2fd3bffd01836e90f7df7496bf477b
+started=2023-05-10T17:06:28.821346+03:00
+acquisition_stopped=2023-05-14T21:06:38.593719+03:00
+processing_stopped=2023-05-14T21:06:41.418414+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_PAM35260_ecf5cd9e_e95c8b5a.txt
+fast5_files_in_final_dest=365
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=365
+fastq_files_in_fallback=0

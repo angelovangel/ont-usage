@@ -1,0 +1,17 @@
+instrument=GXB03401
+position=X4
+flow_cell_id=FAU91631
+sample_id=20230410_P12U5_Kariega_LSK114_minION
+protocol_group_id=20230410_P12U5
+protocol=sequencing/sequencing_MIN114_DNA_e8_2_260T:FLO-MIN114:SQK-LSK114:260
+protocol_run_id=a709578c-f25b-42fb-a5d7-9fc634473865
+acquisition_run_id=e0e10de6dbb1fe97ec34c105a666e75f3bfbef37
+started=2023-04-10T16:07:51.510209+03:00
+acquisition_stopped=2023-04-14T20:08:55.499054+03:00
+processing_stopped=2023-04-14T20:09:35.871191+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_FAU91631_a709578c_e0e10de6.txt
+fast5_files_in_final_dest=0
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=489
+fastq_files_in_fallback=0

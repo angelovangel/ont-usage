@@ -1,0 +1,17 @@
+instrument=GXB03401
+position=X1
+flow_cell_id=FAU94322
+sample_id=20230516_P0U0_rbk114validation
+protocol_group_id=20230516_P0U0
+protocol=sequencing/sequencing_MIN114_DNA_e8_2_260T:FLO-MIN114:SQK-RBK114-96:260
+protocol_run_id=63f3687d-b29e-43db-a900-5b1ca2a39898
+acquisition_run_id=ac5ad9dda2459d5e7bb64683141302613dd92348
+started=2023-05-16T16:59:58.166703+03:00
+acquisition_stopped=2023-05-19T17:01:02.405371+03:00
+processing_stopped=2023-05-19T17:02:40.045517+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_FAU94322_63f3687d_ac5ad9dd.txt
+fast5_files_in_final_dest=0
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=844
+fastq_files_in_fallback=0

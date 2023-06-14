@@ -1,0 +1,17 @@
+instrument=GXB03401
+position=X2
+flow_cell_id=ALQ678
+sample_id=29012023_P24U1
+protocol_group_id=29012023_P24U1
+protocol=sequencing/sequencing_MIN106_DNA:FLO-FLG001:SQK-RBK110-96
+protocol_run_id=4fe818d7-4f93-4795-9d98-cd3acc9e5b1f
+acquisition_run_id=055e50df9f8d74dd49d9a6d66d0a571629e9f95d
+started=2023-01-29T15:38:10.641041+03:00
+acquisition_stopped=2023-01-30T13:35:12.929437+03:00
+processing_stopped=2023-01-30T13:35:14.481067+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_ALQ678_4fe818d7_055e50df.txt
+fast5_files_in_final_dest=62
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=61
+fastq_files_in_fallback=0

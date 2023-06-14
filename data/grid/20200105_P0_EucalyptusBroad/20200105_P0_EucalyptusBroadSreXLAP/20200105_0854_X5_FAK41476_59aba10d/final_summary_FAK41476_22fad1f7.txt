@@ -1,0 +1,17 @@
+instrument=GXB01373
+position=X5
+flow_cell_id=FAK41476
+sample_id=20200105_P0_EucalyptusBroadSreXLAP
+protocol_group_id=20200105_P0_EucalyptusBroad
+protocol=sequencing/sequencing_MIN106_DNA:FLO-MIN106:SQK-LSK109:True
+protocol_run_id=59aba10d-1d81-48c9-9b7d-40370ce896a3
+acquisition_run_id=22fad1f786583dc0d801355ce7ed5484533a4ee6
+started=2020-01-05T11:58:29.367999+03:00
+acquisition_stopped=2020-01-07T11:56:42.609128+03:00
+processing_stopped=2020-01-07T11:56:52.443032+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_FAK41476_22fad1f7.txt
+fast5_files_in_final_dest=188
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=188
+fastq_files_in_fallback=0

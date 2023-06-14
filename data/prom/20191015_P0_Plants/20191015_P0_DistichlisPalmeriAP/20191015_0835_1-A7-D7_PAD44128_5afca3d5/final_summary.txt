@@ -1,0 +1,17 @@
+instrument=PCT0047
+position=1-A7-D7
+flow_cell_id=PAD44128
+sample_id=20191015_P0_DistichlisPalmeriAP
+protocol_group_id=20191015_P0_Plants
+protocol=07335040c02a08bf1d64d5da9bd2fa9303cf454f
+protocol_run_id=5afca3d5-cfb3-44af-9e2e-bc6f17597b2e
+acquisition_run_id=8f0a40474db00216ad1d6aded472ca4c34ef0656
+started=2019-10-15T11:36:40.823823+03:00
+acquisition_stopped=2019-10-17T13:24:12.406646+03:00
+processing_stopped=2019-10-17T13:24:15.852107+03:00
+basecalling_enabled=1
+sequencing_summary_file=PCT0047_20191015_113559_PAD44128_promethion_sequencing_run_20191015_P0_DistichlisPalmeriAP_sequencing_summary.txt
+fast5_files_in_final_dest=892
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=892
+fastq_files_in_fallback=0

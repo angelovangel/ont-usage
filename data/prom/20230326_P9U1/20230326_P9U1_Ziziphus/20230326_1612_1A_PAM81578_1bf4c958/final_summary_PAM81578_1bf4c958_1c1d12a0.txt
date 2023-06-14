@@ -1,0 +1,17 @@
+instrument=PC24B323
+position=1A
+flow_cell_id=PAM81578
+sample_id=20230326_P9U1_Ziziphus
+protocol_group_id=20230326_P9U1
+protocol=sequencing/sequencing_PRO114_DNA_e8_2_260T:FLO-PRO114M:SQK-LSK114:260
+protocol_run_id=1bf4c958-0c54-4d75-aeec-b2b2c18fdba9
+acquisition_run_id=1c1d12a06baef09f7b0926f610d361b3619011f8
+started=2023-03-26T16:18:04.138141+03:00
+acquisition_stopped=2023-03-29T16:19:11.409574+03:00
+processing_stopped=2023-03-29T16:21:50.688479+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_PAM81578_1bf4c958_1c1d12a0.txt
+fast5_files_in_final_dest=0
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=858
+fastq_files_in_fallback=0

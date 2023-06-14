@@ -1,0 +1,17 @@
+instrument=GXB03401
+position=X1
+flow_cell_id=AGP942
+sample_id=20221106_P22U1
+protocol_group_id=20221106_P22U1
+protocol=sequencing/sequencing_MIN106_DNA:FLO-FLG001:SQK-RAD004
+protocol_run_id=6d9a2fe4-e349-4973-bd5c-9c72f691cd2e
+acquisition_run_id=9385e08d8d17ef38a7bd0c9f9e691828235ee00e
+started=2022-11-06T17:25:31.596091+03:00
+acquisition_stopped=2022-11-07T17:26:47.453198+03:00
+processing_stopped=2022-11-07T17:26:55.082645+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_AGP942_9385e08d.txt
+fast5_files_in_final_dest=151
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=151
+fastq_files_in_fallback=0

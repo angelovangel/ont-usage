@@ -1,0 +1,17 @@
+instrument=PC24B323
+position=1D
+flow_cell_id=PAH03305
+sample_id=20221024_Linsheng25Samples
+protocol_group_id=20221024_Linsheng
+protocol=sequencing/sequencing_PRO002_DNA:FLO-PRO002:SQK-RBK110-96
+protocol_run_id=87699b2a-fdd7-4cad-8733-da06386db4c4
+acquisition_run_id=3d5a2201b800f0d6fac0a9f397409de83e2da1d4
+started=2022-10-24T16:27:53.454708+03:00
+acquisition_stopped=2022-10-26T08:46:41.852219+03:00
+processing_stopped=2022-10-26T08:46:46.866784+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_PAH03305_3d5a2201.txt
+fast5_files_in_final_dest=263
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=261
+fastq_files_in_fallback=0

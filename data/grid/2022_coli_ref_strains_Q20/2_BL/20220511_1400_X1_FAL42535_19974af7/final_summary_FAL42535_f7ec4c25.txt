@@ -1,0 +1,17 @@
+instrument=GXB03401
+position=X1
+flow_cell_id=FAL42535
+sample_id=2_BL
+protocol_group_id=coli_ref_strains
+protocol=sequencing/sequencing_MIN106_DNA_SQK-Q20EA:FLO-MIN106:SQK-LSK112
+protocol_run_id=19974af7-2208-41cd-bcad-8059ea44b70f
+acquisition_run_id=f7ec4c253cc829473228f5fbf384983f71a680cc
+started=2022-05-11T14:04:39.075908+03:00
+acquisition_stopped=2022-05-13T14:04:42.909895+03:00
+processing_stopped=2022-05-13T14:05:25.616060+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_FAL42535_f7ec4c25.txt
+fast5_files_in_final_dest=130
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=130
+fastq_files_in_fallback=0

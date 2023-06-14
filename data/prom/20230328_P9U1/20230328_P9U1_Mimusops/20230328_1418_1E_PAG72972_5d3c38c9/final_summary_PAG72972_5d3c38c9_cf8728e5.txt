@@ -1,0 +1,17 @@
+instrument=PC24B323
+position=1E
+flow_cell_id=PAG72972
+sample_id=20230328_P9U1_Mimusops
+protocol_group_id=20230328_P9U1
+protocol=sequencing/sequencing_PRO114_DNA_e8_2_260T:FLO-PRO114M:SQK-LSK114:260
+protocol_run_id=5d3c38c9-dddc-46d0-bfa2-8df70df822c2
+acquisition_run_id=cf8728e5a91a5002ca95c17e9e3af3ce6dc1b29d
+started=2023-03-28T14:24:08.193764+03:00
+acquisition_stopped=2023-03-31T14:25:16.258973+03:00
+processing_stopped=2023-04-02T12:22:57.227001+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_PAG72972_5d3c38c9_cf8728e5.txt
+fast5_files_in_final_dest=0
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=1683
+fastq_files_in_fallback=0

@@ -1,0 +1,17 @@
+instrument=GXB03401
+position=X1
+flow_cell_id=ALL275
+sample_id=20230409_P7U1_Microbial_seq
+protocol_group_id=20230409_P7U1
+protocol=sequencing/sequencing_MIN106_DNA:FLO-FLG001:SQK-RBK110-96
+protocol_run_id=bd0c3b86-713f-40f4-a433-94aeb9296b1a
+acquisition_run_id=944637d15d411b045dc96d96443db30477ced6f0
+started=2023-04-09T15:14:13.587850+03:00
+acquisition_stopped=2023-04-10T14:40:06.354657+03:00
+processing_stopped=2023-04-10T14:40:15.787729+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_ALL275_bd0c3b86_944637d1.txt
+fast5_files_in_final_dest=1
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=41
+fastq_files_in_fallback=0

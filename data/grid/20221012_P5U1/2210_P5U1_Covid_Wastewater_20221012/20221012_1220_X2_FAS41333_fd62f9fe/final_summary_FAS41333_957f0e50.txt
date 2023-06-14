@@ -1,0 +1,17 @@
+instrument=GXB03401
+position=X2
+flow_cell_id=FAS41333
+sample_id=2210_P5U1_Covid_Wastewater_20221012
+protocol_group_id=2210_P5U1_Covid_Wastewater_20221012
+protocol=sequencing/sequencing_MIN106_DNA:FLO-MIN106:SQK-LSK109
+protocol_run_id=fd62f9fe-a62d-49b9-93c8-1359d0b5cdc6
+acquisition_run_id=957f0e500e4e5f43fe8f87d8bbb7581d2621bed1
+started=2022-10-12T12:24:26.300223+03:00
+acquisition_stopped=2022-10-15T12:24:30.431299+03:00
+processing_stopped=2022-10-15T12:24:32.749237+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_FAS41333_957f0e50.txt
+fast5_files_in_final_dest=114
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=114
+fastq_files_in_fallback=0

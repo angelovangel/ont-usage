@@ -1,0 +1,17 @@
+instrument=PC24B323
+position=2C
+flow_cell_id=PAO06261
+sample_id=20230529_POU1_Hharid
+protocol_group_id=20230529_POU1_FishGenomes
+protocol=sequencing/sequencing_PRO114_DNA_e8_2_400K:FLO-PRO114M:SQK-LSK114:400
+protocol_run_id=528ce5aa-c2de-4bf1-b8ca-ca91030cf24b
+acquisition_run_id=5f2e43d03a0a242f0224b4bad6e00479771d9ddb
+started=2023-05-29T18:18:18.962536+03:00
+acquisition_stopped=2023-05-30T14:44:20.509938+03:00
+processing_stopped=2023-05-30T16:50:03.685936+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_PAO06261_528ce5aa_5f2e43d0.txt
+fast5_files_in_final_dest=2895
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=2925
+fastq_files_in_fallback=0

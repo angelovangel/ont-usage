@@ -1,0 +1,17 @@
+instrument=PC24B323
+position=3D
+flow_cell_id=PAG72976
+sample_id=20230511_P7U1_M1tes
+protocol_group_id=20230511_P7U1
+protocol=sequencing/sequencing_PRO114_DNA_e8_2_260T:FLO-PRO114M:SQK-RBK114-96:260
+protocol_run_id=e83f7a30-682b-4df1-b9d0-a653027a39cb
+acquisition_run_id=2ad2505bf0e96108c5a4e7e5084f08150a0789e6
+started=2023-05-11T16:04:50.090581+03:00
+acquisition_stopped=2023-05-14T12:54:01.446077+03:00
+processing_stopped=2023-05-14T12:55:18.019886+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_PAG72976_e83f7a30_2ad2505b.txt
+fast5_files_in_final_dest=0
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=1823
+fastq_files_in_fallback=0

@@ -1,0 +1,17 @@
+instrument=PC24B323
+position=3H
+flow_cell_id=PAK82976
+sample_id=20230524_P22U2_run4
+protocol_group_id=20230524_P22U2_run4
+protocol=sequencing/sequencing_PRO114_DNA_e8_2_400K:FLO-PRO114M:SQK-RBK114-96:400
+protocol_run_id=b3e4f187-7ab2-4e0c-9f74-336bf7223c44
+acquisition_run_id=51d08009086808366bc5818e65cf7d080714beba
+started=2023-05-24T11:35:33.671973+03:00
+acquisition_stopped=2023-05-28T08:13:22.632583+03:00
+processing_stopped=2023-05-30T19:02:45.263071+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_PAK82976_b3e4f187_51d08009.txt
+fast5_files_in_final_dest=4424
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=6601
+fastq_files_in_fallback=0

@@ -1,0 +1,17 @@
+instrument=GXB03401
+position=X2
+flow_cell_id=FAU10244
+sample_id=20230509_plasmids_54
+protocol_group_id=20230509_plasmids
+protocol=sequencing/sequencing_MIN106_DNA:FLO-MIN106:SQK-RBK110-96
+protocol_run_id=4d0f5766-4a63-4d49-868f-553fab93bf98
+acquisition_run_id=c4ad20e5e439a761a326cd38743a52c79fd74796
+started=2023-05-09T11:38:23.954335+03:00
+acquisition_stopped=2023-05-11T08:03:26.853879+03:00
+processing_stopped=2023-05-11T08:04:37.574834+03:00
+basecalling_enabled=1
+sequencing_summary_file=sequencing_summary_FAU10244_4d0f5766_c4ad20e5.txt
+fast5_files_in_final_dest=0
+fast5_files_in_fallback=0
+fastq_files_in_final_dest=773
+fastq_files_in_fallback=0
