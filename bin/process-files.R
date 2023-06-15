@@ -44,7 +44,7 @@ getlines <- function(x, y) {
 mylist = list(
   start = 'started=',
   end = 'processing_stopped=',
-  id = 'protocol_run_id=',
+  run_id = 'protocol_run_id=',
   seqend = 'acquisition_stopped=',
   content = 'flow_cell_id=',
   protocol_group_id = 'protocol_group_id=',
