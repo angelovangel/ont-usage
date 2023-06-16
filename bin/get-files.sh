@@ -22,3 +22,9 @@ nanopore@mover.ibex.kaust.edu.sa:/biocorelab/RawData/GridION/ data/grid/
 # process data to make a csv for app and sharing
 bin/process-files.R -p prom -r data/prom.csv data/prom 
 bin/process-files.R -p grid -r data/grid.csv data/grid
+
+#
+#find data -type f -name 'sequencing*' -exec basename {} \; | cut -d_ -f 3
+# run counts on all seq files
+# find data -type f -name 'sequencing*' | parallel bin/count_seq_summary.sh > data/counts.csv
+

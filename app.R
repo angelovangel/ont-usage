@@ -12,25 +12,31 @@ library(vroom)
 library(purrr)
 library(shiny)
 library(shinydashboard)
-library(DT)
+library(reactable)
 library(timevis)
 library(stringr)
 library(dplyr)
 library(lubridate)
+library(ivs) # https://cran.r-project.org/web/packages/ivs/vignettes/ivs.html
 library(digest)
 
 # data loaded once for all sessions
-processed_files <- list.files('data', pattern = '*.csv', full.names = T, recursive = F)
+processed_files <- list.files('data', pattern = 'grid|prom.csv', full.names = T, recursive = F)
+count_files <- list.files('data', pattern = 'counts.csv', full.names = T, recursive = F)
 df1 <- vroom(processed_files) %>% 
   dplyr::distinct() %>%
   mutate(type = 'range') %>%
-  # create id
   rowwise() %>% 
-  mutate(id = digest(rnorm(1)))
+  mutate(id = run_id)
+  #mutate(id = digest(rnorm(1)))
+  # create id
+ 
 
-count_files <- list.files('data/counts/', pattern = '*.csv', full.names = T, recursive = F)
-dcounts <- vroom(count_files, col_names = c('file', 'bases', 'reads')) %>%
+df2 <- vroom(count_files, col_names = c('file', 'bases_pass', 'reads_pass', 'bases_fail', 'reads_fail')) %>%
+  dplyr::distinct() %>%
   mutate(flowcell = str_extract(string = file, pattern = '(?<=summary_)[A-Z]+[0-9]+'))
+
+df <- df1 %>% left_join(df2, by = c('seq_summary_file' = 'file'))
 
 groups_df <- data.frame(
   id = c('grid', 'prom'),
@@ -43,7 +49,10 @@ ui <- dashboardPage(
   sidebar = dashboardSidebar(disable = T), 
   body = dashboardBody(
     fluidRow(
-      box(width = 3, dateRangeInput('dates', 'Select interval', separator = '--')),
+      box(width = 3, 
+          dateRangeInput('dates', 'Select interval', separator = '--'),
+          checkboxInput('stack', 'Expand items', value = FALSE)
+          ),
       box(width = 9, 
           valueBoxOutput('experiments'), 
           valueBoxOutput('cells'), 
@@ -60,28 +69,35 @@ ui <- dashboardPage(
 server <- function(input, output, session) {
   
   output$usage_timevis <- renderTimevis({
-    timevis(df1, groups = groups_df, fit = F, 
+    timevis(df, groups = groups_df, fit = F,
             options = list(
-              start = Sys.Date() - 90, 
-              end = Sys.Date() + 7, 
+              start = Sys.Date() - 30, 
+              end = Sys.Date() + 3, 
               min = Sys.Date() - years(3), 
               max = Sys.Date() + months(1), 
               maxHeight = '500px', 
-              minHeight = '300px', 
-              zoomMin = 604800000, zoomMax = 31556926000, clickToUse = TRUE
+              #minHeight = '300px', 
+              zoomMin = 604800000, zoomMax = 31556926000, 
+              clickToUse = FALSE, 
+              stack = input$stack
               )
             )
   })
     
   output$selected <- renderValueBox({
-    selected <- df1$id == input$usage_timevis_selected
+    selected <- df$id == input$usage_timevis_selected
+    myvalue <- paste0('Bla')
+    
+    mysubtitle <- paste0(
+      df$group[selected], ' ', df$content[selected], ' ', 
+      round(interval(df$start[selected], df$end[selected]) %>% as.duration() %>% as.numeric('hours'), 1)
+      )
+    print(mysubtitle)
     valueBox(
       color = 'light-blue',
-      value = paste0(
-        round(interval(df1$start[selected], df1$end[selected]) %>% as.duration() %>% as.numeric('hours'), 1), 
-        ' hours'
-        ),
-      subtitle = paste0(df1$content[selected], ' | ', df1$group[selected])
+      value = myvalue,
+        #round(interval(df$start[selected], df$end[selected]) %>% as.duration() %>% as.numeric('hours'), 1), 
+      subtitle = mysubtitle
     )
   })
   
