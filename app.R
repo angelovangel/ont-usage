@@ -19,6 +19,8 @@ library(dplyr)
 library(lubridate)
 library(ivs) # https://cran.r-project.org/web/packages/ivs/vignettes/ivs.html
 library(digest)
+library(scales)
+
 
 # data loaded once for all sessions
 processed_files <- list.files('data', pattern = 'grid|prom.csv', full.names = T, recursive = F)
@@ -31,9 +33,13 @@ df1 <- vroom(processed_files) %>%
   #mutate(id = digest(rnorm(1)))
   # create id
  
+siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
 
-df2 <- vroom(count_files, col_names = c('file', 'bases_pass', 'reads_pass', 'bases_fail', 'reads_fail')) %>%
+df2 <- vroom(count_files, col_names = c('file', 'bases_pass', 'bases_fail', 'reads_pass', 'reads_fail')) %>%
   dplyr::distinct() %>%
+  # to get colors based on bases, before siformat
+  mutate(ratio = bases_fail/bases_pass, style = paste0('background-color: ', my_temp_color(ratio), ';')) %>%
+  mutate_at('bases_pass', siformat) %>%
   mutate(flowcell = str_extract(string = file, pattern = '(?<=summary_)[A-Z]+[0-9]+'))
 
 df <- df1 %>% left_join(df2, by = c('seq_summary_file' = 'file'))
@@ -50,14 +56,22 @@ ui <- dashboardPage(
   body = dashboardBody(
     fluidRow(
       box(width = 3, 
-          dateRangeInput('dates', 'Select interval', separator = '--'),
-          checkboxInput('stack', 'Expand items', value = FALSE)
+          dateRangeInput('dates',
+                         'Select interval for usage calculation', 
+                         min = Sys.Date() - years(5), 
+                         max = Sys.Date() + years(1),
+                         separator = '--', 
+                         start = Sys.Date() - months(3)),
+          checkboxInput('stack', 'Expand items', value = FALSE),
+          radioButtons('color', 'Color by', inline = T, 
+                       choiceNames = c('Gb output', 'Failed %'), 
+                       choiceValues = c('output', 'failed'), selected = 'failed')
           ),
       box(width = 9, 
-          valueBoxOutput('experiments'), 
+          valueBoxOutput('selected'), 
           valueBoxOutput('cells'), 
-          valueBoxOutput('usage'),
-          valueBoxOutput('selected')
+          valueBoxOutput('usage_prom'),
+          valueBoxOutput('usage_grid')
           ),
       box(width = 12,
           timevisOutput('usage_timevis')
@@ -67,13 +81,18 @@ ui <- dashboardPage(
 )
 
 server <- function(input, output, session) {
+  # reactives
+  dfr <- reactive({
+    df[df$start >= input$dates[1] & df$end <= input$dates[2], ]
+  })
   
+  # outputs
   output$usage_timevis <- renderTimevis({
     timevis(df, groups = groups_df, fit = F,
             options = list(
-              start = Sys.Date() - 30, 
-              end = Sys.Date() + 3, 
-              min = Sys.Date() - years(3), 
+              #start = Sys.Date() - 30, 
+              #end = Sys.Date() + 3, 
+              min = Sys.Date() - years(5), 
               max = Sys.Date() + months(1), 
               maxHeight = '500px', 
               #minHeight = '300px', 
@@ -81,23 +100,49 @@ server <- function(input, output, session) {
               clickToUse = FALSE, 
               stack = input$stack
               )
-            )
+            ) %>% 
+      setWindow(start = input$dates[1], end = input$dates[2])
   })
+  
+  #dates and timevis are linked
+  # observe({
+  #   updateDateRangeInput(session, 'dates', start = input$usage_timevis_window[1], end = input$usage_timevis_window[2])
+  # })
     
   output$selected <- renderValueBox({
     selected <- df$id == input$usage_timevis_selected
-    myvalue <- paste0('Bla')
+    #print(selected)
+    myvalue <- ifelse(
+      length(selected) == 0,
+      '',
+      paste0(df$bases_pass[selected], ' bases')
+                      )
     
-    mysubtitle <- paste0(
-      df$group[selected], ' ', df$content[selected], ' ', 
-      round(interval(df$start[selected], df$end[selected]) %>% as.duration() %>% as.numeric('hours'), 1)
+    mysubtitle <- ifelse(
+        length(selected) == 0,
+        '',
+      paste0(df$group[selected], ' | ', df$content[selected], ' | ', 
+      round(interval(df$start[selected], df$end[selected]) %>% as.duration() %>% as.numeric('hours'), 1), ' hours', ' | ',
+      round(df$ratio[selected]*100, 0), '% failed'
       )
-    print(mysubtitle)
+      )
+    #print(mysubtitle)
     valueBox(
       color = 'light-blue',
       value = myvalue,
-        #round(interval(df$start[selected], df$end[selected]) %>% as.duration() %>% as.numeric('hours'), 1), 
       subtitle = mysubtitle
+    )
+  })
+  
+  output$cells <- renderValueBox({
+    cellcounts <- dfr() %>% count(group)
+    valueBox(
+      value = paste0(nrow(dfr()), ' flowcells'), 
+      subtitle = paste0(input$dates[1], ' ', input$dates[2], ' | ',
+                        'prom - ', cellcounts$n[cellcounts$group == 'prom'], ' | ',
+                        'grid - ', cellcounts$n[cellcounts$group == 'grid']
+                        ),
+      color = 'light-blue',
     )
   })
   
