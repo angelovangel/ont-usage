@@ -4,10 +4,20 @@ my_rainbow <- c("green",
                 "orange",
                 "red")
 # pass fraction as argument, return hex
-my_temp_color <- function(x) {
+my_temp_color <- function(x, scale_from, scale_to) {
   # set scale 
   # color ramp used for temp gradient
   myramp <- scales::colour_ramp(my_rainbow, na.color = "red")
-  #scaled_x <- scales::rescale( x, from = c(0,1), to = c(1,0) ) # invert
-  myramp(x)
+  scaled_x <- scales::rescale( x, from = c(scale_from, scale_to), to = c(0,1) ) # invert
+  myramp(scaled_x)
 }
+
+# merge overlapping intervals, by group
+merge_overlaps <- function(dataframe, start_time, end_time, group) {
+  dataframe %>%
+    ungroup %>%
+    mutate(rng = iv({{start_time}}, {{end_time}})) %>%
+    reframe(rng = iv_groups(rng), .by = {{group}}) %>%
+    mutate(dur = vctrs::field(rng, 2) - vctrs::field(rng, 1))
+}
+

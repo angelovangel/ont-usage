@@ -18,6 +18,7 @@ library(stringr)
 library(dplyr)
 library(lubridate)
 library(ivs) # https://cran.r-project.org/web/packages/ivs/vignettes/ivs.html
+library(vctrs)
 library(digest)
 library(scales)
 
@@ -38,11 +39,13 @@ siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
 df2 <- vroom(count_files, col_names = c('file', 'bases_pass', 'bases_fail', 'reads_pass', 'reads_fail')) %>%
   dplyr::distinct() %>%
   # to get colors based on bases, before siformat
-  mutate(ratio = bases_fail/bases_pass, style = paste0('background-color: ', my_temp_color(ratio), ';')) %>%
+  mutate(ratio = bases_fail/bases_pass, style = paste0('background-color: ', my_temp_color(ratio, 0, 1), ';')) %>%
   mutate_at('bases_pass', siformat) %>%
   mutate(flowcell = str_extract(string = file, pattern = '(?<=summary_)[A-Z]+[0-9]+'))
 
-df <- df1 %>% left_join(df2, by = c('seq_summary_file' = 'file'))
+df <- df1 %>% 
+  left_join(df2, by = c('seq_summary_file' = 'file')) %>%
+  arrange(start)
 
 groups_df <- data.frame(
   id = c('grid', 'prom'),
@@ -72,6 +75,7 @@ ui <- dashboardPage(
           valueBoxOutput('cells'), 
           valueBoxOutput('usage_prom'),
           valueBoxOutput('usage_grid')
+          #uiOutput('selected', inline = T)
           ),
       box(width = 12,
           timevisOutput('usage_timevis')
@@ -101,6 +105,7 @@ server <- function(input, output, session) {
               stack = input$stack
               )
             ) %>% 
+      setSelection(itemId = last(df$id)) %>%
       setWindow(start = input$dates[1], end = input$dates[2])
   })
   
