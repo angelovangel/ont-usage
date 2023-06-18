@@ -10,17 +10,34 @@ rsync -avrm --progress \
 --include='final_summary*' \
 --include='sequencing_summary*' \
 --exclude='*' \
-nanopore@mover.ibex.kaust.edu.sa:/biocorelab/RawData/PromethION/ data/prom/
+nanopore@mover.ibex.kaust.edu.sa:/biocorelab/Genomics/RawData/PromethION/ data/prom/
+
+# separately for encrypted
+rsync -avrm --progress \
+--include='*2*/' \
+--include='final_summary*' \
+--include='sequencing_summary*' \
+--exclude='*' \
+nanopore@mover.ibex.kaust.edu.sa:/encrypted0/biocorelab/Genomics/RawData/PromethION/ data/prom/
+
 
 rsync -avrm --progress \
 --include='*2*/' \
 --include='final_summary*' \
 --include='sequencing_summary*' \
 --exclude='*' \
-nanopore@mover.ibex.kaust.edu.sa:/biocorelab/RawData/GridION/ data/grid/
+nanopore@mover.ibex.kaust.edu.sa:/biocorelab/Genomics/RawData/GridION/ data/grid/
+
+# separately for encrypted
+rsync -avrm --progress \
+--include='*2*/' \
+--include='final_summary*' \
+--include='sequencing_summary*' \
+--exclude='*' \
+nanopore@mover.ibex.kaust.edu.sa:/encrypted0/biocorelab/Genomics/RawData/GridION/ data/grid/
 
 # process data to make a csv for app and sharing
-bin/process-files.R -p prom -r data/prom.csv data/prom 
+bin/process-files.R -p prom -r data/prom.csv data/prom
 bin/process-files.R -p grid -r data/grid.csv data/grid
 
 #

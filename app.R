@@ -24,7 +24,7 @@ library(scales)
 
 
 # data loaded once for all sessions
-processed_files <- list.files('data', pattern = 'grid|prom.csv', full.names = T, recursive = F)
+processed_files <- list.files('data', pattern = 'grid.csv|prom.csv', full.names = T, recursive = F)
 count_files <- list.files('data', pattern = 'counts.csv', full.names = T, recursive = F)
 df1 <- vroom(processed_files) %>% 
   dplyr::distinct() %>%
@@ -90,6 +90,10 @@ server <- function(input, output, session) {
     df[df$start >= input$dates[1] & df$end <= input$dates[2], ]
   })
   
+  dfr_merged <- reactive({
+    merge_overlaps(df, input$dates[1], input$dates[2], group)
+  })
+  
   # outputs
   output$usage_timevis <- renderTimevis({
     timevis(df, groups = groups_df, fit = F,
@@ -143,13 +147,17 @@ server <- function(input, output, session) {
     cellcounts <- dfr() %>% count(group)
     valueBox(
       value = paste0(nrow(dfr()), ' flowcells'), 
-      subtitle = paste0(input$dates[1], ' ', input$dates[2], ' | ',
-                        'prom - ', cellcounts$n[cellcounts$group == 'prom'], ' | ',
-                        'grid - ', cellcounts$n[cellcounts$group == 'grid']
-                        ),
-      color = 'light-blue',
+      subtitle = HTML(paste0(input$dates[1], ' ', input$dates[2], ' | ',
+                        'prom <b>', cellcounts$n[cellcounts$group == 'prom'], '</b> | ',
+                        'grid <b>', cellcounts$n[cellcounts$group == 'grid']
+                        )),
+      color = 'light-blue'
     )
   })
+  
+  # output$usage_grid <- renderValueBox({
+  #   myvalue <- dfr_merged() %>% 
+  # })
   
     
 }
