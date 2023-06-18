@@ -48,7 +48,7 @@ mylist = list(
   seqend = 'acquisition_stopped=',
   content = 'flow_cell_id=',
   protocol_group_id = 'protocol_group_id=',
-  title = 'sample_id=',
+  sample_id = 'sample_id=',
   protocol = 'protocol=',
   seq_summary_file = 'sequencing_summary_file='
 )

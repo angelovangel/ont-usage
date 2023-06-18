@@ -22,37 +22,19 @@ library(vctrs)
 library(digest)
 library(scales)
 
-
-# data loaded once for all sessions
-processed_files <- list.files('data', pattern = 'grid.csv|prom.csv', full.names = T, recursive = F)
-count_files <- list.files('data', pattern = 'counts.csv', full.names = T, recursive = F)
-df1 <- vroom(processed_files) %>% 
-  dplyr::distinct() %>%
-  mutate(type = 'range') %>%
-  rowwise() %>% 
-  mutate(id = run_id)
-  #mutate(id = digest(rnorm(1)))
-  # create id
- 
 siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
 
-df2 <- vroom(count_files, col_names = c('file', 'bases_pass', 'bases_fail', 'reads_pass', 'reads_fail')) %>%
-  dplyr::distinct() %>%
-  # to get colors based on bases, before siformat
-  mutate(ratio = bases_fail/bases_pass, style = paste0('background-color: ', my_temp_color(ratio, 0, 1), ';')) %>%
-  mutate_at('bases_pass', siformat) %>%
-  mutate(flowcell = str_extract(string = file, pattern = '(?<=summary_)[A-Z]+[0-9]+'))
 
-df <- df1 %>% 
-  left_join(df2, by = c('seq_summary_file' = 'file')) %>%
-  arrange(start)
+# data loaded once for all sessions
+df <- vroom('data/df.csv') %>% 
+  mutate(group = factor(group))
 
 groups_df <- data.frame(
   id = c('grid', 'prom'),
   content = c('GridION', 'PromethION')
 )
 
-# Define UI for application that draws a histogram
+# 
 ui <- dashboardPage(
   header = dashboardHeader(title = 'ONT machine usage'),
   sidebar = dashboardSidebar(disable = T), 
@@ -71,7 +53,7 @@ ui <- dashboardPage(
                        choiceValues = c('output', 'failed'), selected = 'failed')
           ),
       box(width = 9, 
-          valueBoxOutput('selected'), 
+          valueBoxOutput('output'), 
           valueBoxOutput('cells'), 
           valueBoxOutput('usage_prom'),
           valueBoxOutput('usage_grid')
@@ -100,7 +82,7 @@ server <- function(input, output, session) {
             options = list(
               #start = Sys.Date() - 30, 
               #end = Sys.Date() + 3, 
-              min = Sys.Date() - years(5), 
+              min = Sys.Date() - years(5),
               max = Sys.Date() + months(1), 
               maxHeight = '500px', 
               #minHeight = '300px', 
@@ -118,35 +100,29 @@ server <- function(input, output, session) {
   #   updateDateRangeInput(session, 'dates', start = input$usage_timevis_window[1], end = input$usage_timevis_window[2])
   # })
     
-  output$selected <- renderValueBox({
-    selected <- df$id == input$usage_timevis_selected
+  output$output <- renderValueBox({
+    promoutput <- sum(dfr()[dfr()$group == 'prom', ]$bases_pass, na.rm = T)
+    gridoutput <- sum(dfr()[dfr()$group == 'grid', ]$bases_pass, na.rm = T)
+    totaloutput <- sum(dfr()$bases_pass, na.rm = T)
     #print(selected)
-    myvalue <- ifelse(
-      length(selected) == 0,
-      '',
-      paste0(df$bases_pass[selected], ' bases')
-                      )
-    
-    mysubtitle <- ifelse(
-        length(selected) == 0,
-        '',
-      paste0(df$group[selected], ' | ', df$content[selected], ' | ', 
-      round(interval(df$start[selected], df$end[selected]) %>% as.duration() %>% as.numeric('hours'), 1), ' hours', ' | ',
-      round(df$ratio[selected]*100, 0), '% failed'
-      )
-      )
+    myvalue <- paste0(siformat(totaloutput), ' bases')
+    mysubtitle <- HTML(paste0(input$dates[1], ' ', input$dates[2], ' | ',
+                              'prom <b>', siformat(promoutput) , '</b> | ',
+                              'grid <b>', siformat(gridoutput) 
+    ))
     #print(mysubtitle)
     valueBox(
       color = 'light-blue',
-      value = myvalue,
+      value = tags$p(myvalue, style = "font-size: 80%; font-weight:normal;"),
       subtitle = mysubtitle
     )
   })
   
   output$cells <- renderValueBox({
-    cellcounts <- dfr() %>% count(group)
+    cellcounts <- dfr() %>% count(group, .drop = F)
+    myvalue <- paste0(nrow(dfr()), ' flowcells')
     valueBox(
-      value = paste0(nrow(dfr()), ' flowcells'), 
+      value = tags$p(myvalue, style = "font-size: 80%; font-weight:normal;"),
       subtitle = HTML(paste0(input$dates[1], ' ', input$dates[2], ' | ',
                         'prom <b>', cellcounts$n[cellcounts$group == 'prom'], '</b> | ',
                         'grid <b>', cellcounts$n[cellcounts$group == 'grid']

@@ -36,12 +36,17 @@ rsync -avrm --progress \
 --exclude='*' \
 nanopore@mover.ibex.kaust.edu.sa:/encrypted0/biocorelab/Genomics/RawData/GridION/ data/grid/
 
+echo 'rsync done, will update data/counts.csv ...'
+#
+# find data -type f -name 'sequencing*' > data/seqsum.files
+# cat data/counts.csv | cut -f1 -d, > data/seqsum-fromcounts.files
+# grep -xvFf data/seqsum-fromcounts.files data/seqsum.files > data/seqsum-newfiles.txt
+# run counts on the new seq files
+# grep -Ff data/seqsum-newfiles.txt data/seqsum.files | parallel bin/count_seq_summary.sh >> data/counts.csv
 # process data to make a csv for app and sharing
+
+echo 'counts done, running process-files.R ...'
 bin/process-files.R -p prom -r data/prom.csv data/prom
 bin/process-files.R -p grid -r data/grid.csv data/grid
 
-#
-#find data -type f -name 'sequencing*' -exec basename {} \; | cut -d_ -f 3
-# run counts on all seq files
-# find data -type f -name 'sequencing*' | parallel bin/count_seq_summary.sh > data/counts.csv
-
+echo 'Done!'
