@@ -66,7 +66,8 @@ ui <- dashboardPage(
           valueBoxOutput('output'), 
           valueBoxOutput('cells'), 
           valueBoxOutput('usage'),
-          textOutput('selected_dates')
+          downloadButton('download', 'Download data')
+          #textOutput('selected_dates')
           ),
       box(width = 12,
           timevisOutput('usage_timevis')
