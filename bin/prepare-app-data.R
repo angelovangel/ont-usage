@@ -1,7 +1,10 @@
 #!/usr/bin/env Rscript
 
 # prepare data for app
-
+library(vroom)
+library(dplyr)
+library(ivs)
+library(stringr)
 
 source('R/global.R')
 

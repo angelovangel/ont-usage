@@ -1,7 +1,3 @@
-library(vroom)
-library(dplyr)
-library(ivs)
-library(stringr)
 
 # heatmap for ratio of pass/fail
 my_rainbow <- c("green", 
