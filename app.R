@@ -36,7 +36,7 @@ groups_df <- data.frame(
 
 # 
 ui <- dashboardPage(
-  header = dashboardHeader(title = 'ONT machine usage'),
+  header = dashboardHeader(title = 'ONT machine usage (BCL)', titleWidth = 350),
   sidebar = dashboardSidebar(disable = T), 
   body = dashboardBody(
     fluidRow(
@@ -48,9 +48,9 @@ ui <- dashboardPage(
                          separator = '--', 
                          start = Sys.Date() - months(3)),
           checkboxInput('stack', 'Expand items', value = FALSE),
-          radioButtons('color', 'Color by', inline = T, 
-                       choiceNames = c('Gb output', 'Failed %'), 
-                       choiceValues = c('output', 'failed'), selected = 'failed')
+          radioButtons('color', 'Color flowcells by', inline = T, 
+                       choiceNames = c('Bases', 'Reads', 'Failed %'), 
+                       choiceValues = c('gb', 'reads', 'failed'), selected = 'failed')
           ),
       box(width = 9, 
           valueBoxOutput('output'), 
@@ -106,9 +106,9 @@ server <- function(input, output, session) {
     totaloutput <- sum(dfr()$bases_pass, na.rm = T)
     #print(selected)
     myvalue <- paste0(siformat(totaloutput), ' bases')
-    mysubtitle <- HTML(paste0(input$dates[1], ' ', input$dates[2], ' | ',
-                              'prom <b>', siformat(promoutput) , '</b> | ',
-                              'grid <b>', siformat(gridoutput) 
+    mysubtitle <- HTML(paste0('prom <b>', siformat(promoutput) , '</b> ',
+                              'grid <b>', siformat(gridoutput), ' </b> <br><br>',
+                               input$dates[1], ' ', input$dates[2]
     ))
     #print(mysubtitle)
     valueBox(
