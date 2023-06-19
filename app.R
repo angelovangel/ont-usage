@@ -29,6 +29,15 @@ siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
 df <- vroom('data/df.csv') %>% 
   mutate(group = factor(group))
 
+dfmerged <- readRDS('data/dfmerged.rds') %>% 
+  mutate(group = factor(group))
+
+dfmerged_total <- dfmerged %>%
+  reframe(total_rng = iv_groups(rng)) %>% 
+  mutate(start = vctrs::field(total_rng, 1),
+         end = vctrs::field(total_rng, 2),
+         dur = end - start)
+
 groups_df <- data.frame(
   id = c('grid', 'prom'),
   content = c('GridION', 'PromethION')
@@ -36,6 +45,7 @@ groups_df <- data.frame(
 
 # 
 ui <- dashboardPage(
+  skin = 'green',
   header = dashboardHeader(title = 'ONT machine usage (BCL)', titleWidth = 350),
   sidebar = dashboardSidebar(disable = T), 
   body = dashboardBody(
@@ -55,9 +65,8 @@ ui <- dashboardPage(
       box(width = 9, 
           valueBoxOutput('output'), 
           valueBoxOutput('cells'), 
-          valueBoxOutput('usage_prom'),
-          valueBoxOutput('usage_grid')
-          #uiOutput('selected', inline = T)
+          valueBoxOutput('usage'),
+          textOutput('selected_dates')
           ),
       box(width = 12,
           timevisOutput('usage_timevis')
@@ -73,7 +82,11 @@ server <- function(input, output, session) {
   })
   
   dfr_merged <- reactive({
-    merge_overlaps(df, input$dates[1], input$dates[2], group)
+    dfmerged[dfmerged$start <= input$dates[2] & dfmerged$end >= input$dates[1], ]
+  })
+  
+  dfr_merged_total <- reactive({
+    dfmerged_total[dfmerged_total$start <= input$dates[2] & dfmerged_total$end >= input$dates[1], ]
   })
   
   # outputs
@@ -91,8 +104,10 @@ server <- function(input, output, session) {
               stack = input$stack
               )
             ) %>% 
+      #addItems(data = dfmerged) %>%
       setSelection(itemId = last(df$id)) %>%
       setWindow(start = input$dates[1], end = input$dates[2])
+      
   })
   
   #dates and timevis are linked
@@ -106,13 +121,12 @@ server <- function(input, output, session) {
     totaloutput <- sum(dfr()$bases_pass, na.rm = T)
     #print(selected)
     myvalue <- paste0(siformat(totaloutput), ' bases')
-    mysubtitle <- HTML(paste0('prom <b>', siformat(promoutput) , '</b> ',
-                              'grid <b>', siformat(gridoutput), ' </b> <br><br>',
-                               input$dates[1], ' ', input$dates[2]
+    mysubtitle <- HTML(paste0('prom <b>', siformat(promoutput) , '</b> <br>',
+                              'grid <b>', siformat(gridoutput), ' </b> '
     ))
     #print(mysubtitle)
     valueBox(
-      color = 'light-blue',
+      color = 'green',
       value = tags$p(myvalue, style = "font-size: 80%; font-weight:normal;"),
       subtitle = mysubtitle
     )
@@ -122,18 +136,38 @@ server <- function(input, output, session) {
     cellcounts <- dfr() %>% count(group, .drop = F)
     myvalue <- paste0(nrow(dfr()), ' flowcells')
     valueBox(
+      color = 'green',
       value = tags$p(myvalue, style = "font-size: 80%; font-weight:normal;"),
-      subtitle = HTML(paste0(input$dates[1], ' ', input$dates[2], ' | ',
-                        'prom <b>', cellcounts$n[cellcounts$group == 'prom'], '</b> | ',
-                        'grid <b>', cellcounts$n[cellcounts$group == 'grid']
-                        )),
-      color = 'light-blue'
+      subtitle = HTML(paste0(
+        'prom <b>', cellcounts$n[cellcounts$group == 'prom'], '</b> <br>',
+        'grid <b>', cellcounts$n[cellcounts$group == 'grid']
+                        ))
     )
   })
   
-  # output$usage_grid <- renderValueBox({
-  #   myvalue <- dfr_merged() %>% 
-  # })
+  output$usage <- renderValueBox({
+    grid_time <- sum(dfr_merged()[dfr_merged()$group == 'grid', ]$dur, na.rm = T) %>% as.duration()
+    prom_time <- sum(dfr_merged()[dfr_merged()$group == 'prom', ]$dur, na.rm = T) %>% as.duration()
+    total_time <- sum(dfr_merged_total()$dur, na.rm = T) %>% as.duration()
+    selected_time <- (input$dates[2] - input$dates[1]) %>% as.duration()
+    
+    
+    total_usage <- paste0(round(total_time/selected_time*100, 0), ' % overall usage')
+    grid_usage <- paste0(round(grid_time/selected_time*100, 0), ' %')
+    prom_usage <- paste0(round(prom_time/selected_time*100, 0), ' %')
+      
+    valueBox(value = tags$p(total_usage, style = "font-size: 80%; font-weight:normal;"),
+             subtitle = HTML(paste0(
+               'prom <b>' , prom_usage, 
+               '</b><br> grid <b>', grid_usage
+               )),
+             color = 'green')
+    
+  })
+  
+  output$selected_dates <- renderText({
+    paste0(input$dates[1], ' - ', input$dates[2])
+  })
   
     
 }

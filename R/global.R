@@ -1,3 +1,8 @@
+library(vroom)
+library(dplyr)
+library(ivs)
+library(stringr)
+
 # heatmap for ratio of pass/fail
 my_rainbow <- c("green", 
                 "yellow", 
@@ -13,15 +18,17 @@ my_temp_color <- function(x, scale_from, scale_to) {
 }
 
 # merge overlapping intervals, by group
-merge_overlaps <- function(dataframe, start_time, end_time, group) {
+merge_overlaps <- function(dataframe, start_time, end_time, grouping) {
   dataframe %>%
     ungroup %>%
     mutate(rng = iv({{start_time}}, {{end_time}})) %>%
-    reframe(rng = iv_groups(rng), .by = {{group}}) %>%
+    reframe(rng = iv_groups(rng), .by = {{grouping}}) %>%
+    #rowwise() %>%
     mutate(
+      content = paste0({{grouping}}, '-merged'),
       start = vctrs::field(rng, 1),
       end = vctrs::field(rng, 2),
       dur = end - start
-      )
+      ) 
 }
 

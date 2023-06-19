@@ -2,17 +2,14 @@
 
 # prepare data for app
 
-library(vroom)
-library(dplyr)
-library(stringr)
 
 source('R/global.R')
 
 siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
 
 processed_files <- list.files('data', pattern = 'grid.csv|prom.csv', full.names = T, recursive = F)
-
 count_files <- list.files('data', pattern = 'counts.csv', full.names = T, recursive = F)
+
 df1 <- vroom(processed_files) %>% 
   dplyr::distinct() %>%
   mutate(type = 'range') %>%
@@ -39,4 +36,9 @@ df <- df1 %>%
   ) %>%
   arrange(start)
 
+dfmerged <- df %>%
+  merge_overlaps(start, end, group)
+
 write.csv(df, file = 'data/df.csv', row.names = F)
+saveRDS(dfmerged, file = 'data/dfmerged.rds')
+
