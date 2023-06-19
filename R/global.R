@@ -18,6 +18,10 @@ merge_overlaps <- function(dataframe, start_time, end_time, group) {
     ungroup %>%
     mutate(rng = iv({{start_time}}, {{end_time}})) %>%
     reframe(rng = iv_groups(rng), .by = {{group}}) %>%
-    mutate(dur = vctrs::field(rng, 2) - vctrs::field(rng, 1))
+    mutate(
+      start = vctrs::field(rng, 1),
+      end = vctrs::field(rng, 2),
+      dur = end - start
+      )
 }
 
