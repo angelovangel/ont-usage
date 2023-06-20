@@ -1,14 +1,14 @@
 
 # heatmap for ratio of pass/fail
-my_rainbow <- c("green", 
-                "yellow", 
-                "orange",
-                "red")
+my_rainbow <- c("#2ECC71", 
+                "#DAF7A6", 
+                "#FFC300",
+                "#FF5733")
 # pass fraction as argument, return hex
 my_temp_color <- function(x, scale_from, scale_to) {
   # set scale 
   # color ramp used for temp gradient
-  myramp <- scales::colour_ramp(my_rainbow, na.color = "red")
+  myramp <- scales::colour_ramp(my_rainbow, na.color = "grey")
   scaled_x <- scales::rescale( x, from = c(scale_from, scale_to), to = c(0,1) ) # invert
   myramp(scaled_x)
 }
