@@ -165,7 +165,15 @@ server <- function(input, output, session) {
            )
   })
   
-    
+  output$download <- downloadHandler(
+    filename = function() {
+      paste0('ontusage-', Sys.Date(), '.csv')
+    },
+    content = function(file) {
+      write.csv(df, file, row.names = F)
+    }
+  )
+  
 }
 
 shinyApp(ui = ui, server = server)
