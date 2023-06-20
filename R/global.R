@@ -8,7 +8,7 @@ my_rainbow <- c("#2ECC71",
 my_temp_color <- function(x, scale_from, scale_to) {
   # set scale 
   # color ramp used for temp gradient
-  myramp <- scales::colour_ramp(my_rainbow, na.color = "grey")
+  myramp <- scales::colour_ramp(my_rainbow, na.color = "#FF5733")
   scaled_x <- scales::rescale( x, from = c(scale_from, scale_to), to = c(0,1) ) # invert
   myramp(scaled_x)
 }
