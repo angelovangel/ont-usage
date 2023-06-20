@@ -60,11 +60,11 @@ ui <- dashboardPage(
           valueBoxOutput('output'), 
           valueBoxOutput('cells'), 
           valueBoxOutput('usage'),
-          downloadButton('download', 'Download data')
-          #textOutput('selected_dates')
+          htmlOutput('selected_dates')
           ),
       box(width = 12,
-          timevisOutput('usage_timevis')
+          timevisOutput('usage_timevis'),
+          downloadButton('download', 'Download data')
       )
     )
   )
@@ -160,8 +160,9 @@ server <- function(input, output, session) {
     
   })
   
-  output$selected_dates <- renderText({
-    paste0(input$dates[1], ' - ', input$dates[2])
+  output$selected_dates <- renderPrint({
+    tags$p(paste0(input$dates[1], ' - ', input$dates[2])
+           )
   })
   
     

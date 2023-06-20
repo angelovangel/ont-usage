@@ -7,33 +7,33 @@
 
 echo '=== starting get-files.sh, running rsync ...'
 
-rsync -avrm --progress \
---include='*2*/' \
---include='final_summary*' \
+rsync -avm --progress \
+--include='*/' \
+--include='*final_summary*' \
 --include='*sequencing_summary*' \
 --exclude='*' \
 nanopore@mover.ibex.kaust.edu.sa:/biocorelab/Genomics/RawData/PromethION/ data/prom/
 
 # separately for encrypted
-rsync -avrm --progress \
---include='*2*/' \
---include='final_summary*' \
+rsync -avm --progress \
+--include='*/' \
+--include='*final_summary*' \
 --include='*sequencing_summary*' \
 --exclude='*' \
 nanopore@mover.ibex.kaust.edu.sa:/encrypted0/biocorelab/Genomics/RawData/PromethION/ data/prom/
 
 
-rsync -avrm --progress \
---include='*2*/' \
---include='final_summary*' \
+rsync -avm --progress \
+--include='*/' \
+--include='*final_summary*' \
 --include='*sequencing_summary*' \
 --exclude='*' \
 nanopore@mover.ibex.kaust.edu.sa:/biocorelab/Genomics/RawData/GridION/ data/grid/
 
 # separately for encrypted
-rsync -avrm --progress \
---include='*2*/' \
---include='final_summary*' \
+rsync -avm --progress \
+--include='*/' \
+--include='*final_summary*' \
 --include='*sequencing_summary*' \
 --exclude='*' \
 nanopore@mover.ibex.kaust.edu.sa:/encrypted0/biocorelab/Genomics/RawData/GridION/ data/grid/
