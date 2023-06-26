@@ -6,7 +6,7 @@ library(vroom)
 library(purrr)
 library(shiny)
 library(shinydashboard)
-library(reactable)
+library(DT)
 library(timevis)
 library(stringr)
 library(dplyr)
@@ -22,6 +22,7 @@ siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
 # data loaded once for all sessions
 df <- vroom('data/df.csv') %>% 
   mutate(group = factor(group))
+flowcells <- na.exclude(df$flowcell)
 
 dfmerged <- readRDS('data/dfmerged.rds') %>% 
   mutate(group = factor(group))
@@ -51,10 +52,13 @@ ui <- dashboardPage(
                          max = Sys.Date() + years(1),
                          separator = '--', 
                          start = Sys.Date() - months(3)),
-          checkboxInput('stack', 'Expand items', value = FALSE),
-          radioButtons('color', 'Color flowcells by', inline = T, 
-                       choiceNames = c('Bases', 'Reads', 'Failed %'), 
-                       choiceValues = c('gb', 'reads', 'failed'), selected = 'failed')
+          selectizeInput('flowcells', 'Search flow cells', 
+                         choices = NA, 
+                         multiple = T),
+          checkboxInput('stack', 'Expand items', value = FALSE)
+          # radioButtons('color', 'Color flowcells by', inline = T, 
+          #              choiceNames = c('Bases', 'Reads', 'Failed %'), 
+          #              choiceValues = c('gb', 'reads', 'failed'), selected = 'failed')
           ),
       box(width = 9, 
           valueBoxOutput('output'), 
@@ -64,7 +68,8 @@ ui <- dashboardPage(
           ),
       box(width = 12,
           timevisOutput('usage_timevis'),
-          downloadButton('download', 'Download data')
+          downloadButton('download', 'Download data'),
+          DTOutput('selected_flowcells')
       )
     )
   )
@@ -174,6 +179,21 @@ server <- function(input, output, session) {
     }
   )
   
+  output$selected_flowcells <- renderDataTable({
+    mydata <- dfr() %>%
+      dplyr::select(c('flowcell', 'group', 'bases_pass', 'bases_fail', 'reads_pass', 'reads_fail'))
+    
+    datatable(mydata, 
+              filter = 'top', 
+              selection = 'multiple'
+              )
+  })
+  
+  # OBSERVERS
+  
+  observe({
+    updateSelectizeInput(session, 'flowcells', choices = c('all', dfr()$flowcell))
+  })
 }
 
 shinyApp(ui = ui, server = server)

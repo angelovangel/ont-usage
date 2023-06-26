@@ -23,10 +23,17 @@ df1 <- vroom(processed_files) %>%
 
 
 
-df2 <- vroom(count_files, col_names = c('file', 'bases_pass', 'bases_fail', 'reads_pass', 'reads_fail')) %>%
+df2 <- vroom(count_files, 
+             col_names = c('file', 'bases_pass', 'bases_fail', 
+                           'reads_pass', 'reads_fail', 
+                           'nx_pass', 'nx_fail', 'mean_qscore')
+             ) %>%
   dplyr::distinct() %>%
-  # to get colors based on bases, before siformat
-  mutate(ratio = bases_fail/bases_pass, style = paste0('background-color: ', my_temp_color(ratio, 0, 1), ';')) %>%
+  # use basename of file to match the final_summary seq_summary_file
+  mutate(file = basename(file),
+         ratio = bases_fail/bases_pass, 
+         style = paste0('background-color: ', my_temp_color(ratio, 0, 1), ';')
+         ) %>%
   mutate(flowcell = str_extract(string = file, pattern = '(?<=summary_)[A-Z]+[0-9]+'))
 
 df <- df1 %>% 
