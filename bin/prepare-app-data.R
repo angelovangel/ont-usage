@@ -28,10 +28,10 @@ df2 <- vroom(count_files,
                            'reads_pass', 'reads_fail', 
                            'nx_pass', 'nx_fail', 'mean_qscore')
              ) %>%
+  mutate(file = basename(file)) %>%
   dplyr::distinct() %>%
   # use basename of file to match the final_summary seq_summary_file
-  mutate(file = basename(file),
-         ratio = bases_fail/bases_pass, 
+  mutate(ratio = bases_fail/bases_pass, 
          style = paste0('background-color: ', my_temp_color(ratio, 0, 1), ';')
          ) %>%
   mutate(flowcell = str_extract(string = file, pattern = '(?<=summary_)[A-Z]+[0-9]+'))
