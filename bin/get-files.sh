@@ -48,7 +48,7 @@ cat data/counts.csv | cut -f1 -d, > data/seqsum-fromcounts.files
 # get files in seqsum.files NOT present in counts and run script on them
 newfiles=$(grep -vFf data/seqsum-fromcounts.files data/seqsum.files | wc -l)
 echo "=== found $newfiles new sequencing summary files"
-grep -vFf data/seqsum-fromcounts.files data/seqsum.files | parallel bin/count_seq_summary.sh >> data/counts.csv
+grep -vFf data/seqsum-fromcounts.files data/seqsum.files | parallel bin/count_seq_summary.sh 0.5 >> data/counts.csv
 
  
 # process data to make a csv for app and sharing

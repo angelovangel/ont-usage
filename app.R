@@ -181,7 +181,7 @@ server <- function(input, output, session) {
   
   output$selected_flowcells <- renderDataTable({
     mydata <- dfr() %>%
-      dplyr::select(c('flowcell', 'group', 'bases_pass', 'bases_fail', 'reads_pass', 'reads_fail'))
+      dplyr::select(c('flowcell', 'group', 'bases_pass', 'bases_fail', 'reads_pass', 'reads_fail', 'mean_qscore'))
     
     datatable(mydata, 
               filter = 'top', 
