@@ -52,9 +52,9 @@ ui <- dashboardPage(
                          max = Sys.Date() + years(1),
                          separator = '--', 
                          start = Sys.Date() - months(3)),
-          selectizeInput('flowcells', 'Search flow cells', 
-                         choices = NA, 
-                         multiple = T),
+          # selectizeInput('sampleids', 'Search by Pool ID', 
+          #                choices = NA, 
+          #                multiple = T),
           checkboxInput('stack', 'Expand items', value = FALSE)
           # radioButtons('color', 'Color flowcells by', inline = T, 
           #              choiceNames = c('Bases', 'Reads', 'Failed %'), 
@@ -69,7 +69,7 @@ ui <- dashboardPage(
       box(width = 12,
           timevisOutput('usage_timevis'),
           downloadButton('download', 'Download data'),
-          DTOutput('selected_flowcells')
+          DTOutput('datatable')
       )
     )
   )
@@ -179,21 +179,44 @@ server <- function(input, output, session) {
     }
   )
   
-  output$selected_flowcells <- renderDataTable({
-    mydata <- dfr() %>%
-      dplyr::select(c('flowcell', 'group', 'bases_pass', 'bases_fail', 'reads_pass', 'reads_fail', 'mean_qscore'))
+  output$datatable <- renderDataTable({
+    mydata <- 
+      dfr() %>%
+      #dplyr::filter(sample_id %in% input$sampleids) %>%
+      mutate(start_date = as.Date(start)) %>%
+      dplyr::select(c('start_date', 'flowcell', 'group', 'sample_id', 'title', 'mean_qscore'))
     
     datatable(mydata, 
               filter = 'top', 
-              selection = 'multiple'
+              selection = 'single', 
+              class = 'hover',
+              options = list(
+                searchHighlight = TRUE,
+                pageLength = 20,
+                autoWidth = TRUE, 
+                dom = 'tp')
               )
   })
   
   # OBSERVERS
   
   observe({
-    updateSelectizeInput(session, 'flowcells', choices = c('all', dfr()$flowcell))
+    updateSelectizeInput(session, 'sampleids', choices = dfr()$sample_id)
   })
+  
+  # focus timevis based on DT selection
+  #proxy <- dataTableProxy('datatable')
+  
+  observe({
+    mydate <- dfr()[input$datatable_rows_selected, ]$start
+    myitemid <- dfr()[input$datatable_rows_selected, ]$id
+    tv_selected <- input$usage_timevis_selected
+    
+    timevis::centerTime('usage_timevis', mydate) %>%
+      timevis::setSelection(itemId = myitemid)
+    #proxy %>% selectRows( which(dfr()$id == tv_selected) )
+  })
+  
 }
 
 shinyApp(ui = ui, server = server)
