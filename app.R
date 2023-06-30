@@ -55,11 +55,13 @@ ui <- dashboardPage(
           # selectizeInput('sampleids', 'Search by Pool ID', 
           #                choices = NA, 
           #                multiple = T),
-          checkboxInput('stack', 'Expand items', value = FALSE)
-          # radioButtons('color', 'Color flowcells by', inline = T, 
-          #              choiceNames = c('Bases', 'Reads', 'Failed %'), 
-          #              choiceValues = c('gb', 'reads', 'failed'), selected = 'failed')
+          checkboxInput('stack', 'Expand items', value = FALSE),
+          radioButtons('color', 'Color flowcells by', inline = T,
+                       choiceNames = c('Mean Q-score', 'Failed bases %'),
+                       choiceValues = c('style_qscore', 'style_failed'), selected = 'style_failed')
+                       # these match the df.csv columns
           ),
+  
       box(width = 9, 
           valueBoxOutput('output'), 
           valueBoxOutput('cells'), 
@@ -77,6 +79,7 @@ ui <- dashboardPage(
 
 server <- function(input, output, session) {
   # reactives
+  
   dfr <- reactive({
     df[df$start >= input$dates[1] & df$end <= input$dates[2], ]
   })
@@ -91,7 +94,9 @@ server <- function(input, output, session) {
   
   # outputs
   output$usage_timevis <- renderTimevis({
-    timevis(df, groups = groups_df, fit = F,
+    mydata <- df %>% mutate(style = .data[[input$color]])
+    timevis(mydata, 
+            groups = groups_df, fit = F,
             options = list(
               #start = Sys.Date() - 30, 
               #end = Sys.Date() + 3, 
@@ -185,7 +190,7 @@ server <- function(input, output, session) {
       #dplyr::filter(sample_id %in% input$sampleids) %>%
       mutate(start_date = as.Date(start)) %>%
       dplyr::select(c('start_date', 'flowcell', 'group', 'sample_id', 'title', 'mean_qscore'))
-    
+
     datatable(mydata, 
               filter = 'top', 
               selection = 'single', 
@@ -200,8 +205,10 @@ server <- function(input, output, session) {
   
   # OBSERVERS
   
+  # color gradient
   observe({
-    updateSelectizeInput(session, 'sampleids', choices = dfr()$sample_id)
+    #updateDateRangeInput(session, 'dates', )
+    print(input$datatable_rows_all)
   })
   
   # focus timevis based on DT selection
