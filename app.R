@@ -10,9 +10,11 @@ library(DT)
 library(timevis)
 library(stringr)
 library(dplyr)
+library(tidyr)
 library(lubridate)
 library(ivs) # https://cran.r-project.org/web/packages/ivs/vignettes/ivs.html
 library(vctrs)
+library(highcharter)
 library(digest)
 library(scales)
 
@@ -23,9 +25,13 @@ siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
 df <- vroom('data/df.csv') %>% 
   mutate(group = factor(group))
 flowcells <- na.exclude(df$flowcell)
+  
 
-dfmerged <- readRDS('data/dfmerged.rds') %>% 
+dfmerged <- df %>% 
+  merge_overlaps(start, end, group) %>% 
   mutate(group = factor(group))
+# dfmerged <- readRDS('data/dfmerged.rds') %>% 
+#   mutate(group = factor(group))
 
 dfmerged_total <- dfmerged %>%
   reframe(total_rng = iv_groups(rng)) %>% 
@@ -41,9 +47,12 @@ groups_df <- data.frame(
 # 
 ui <- dashboardPage(
   skin = 'green',
-  header = dashboardHeader(title = 'ONT machine usage (BCL)', titleWidth = 350),
+  header = dashboardHeader(title = 'TGS machine usage (BCL)', titleWidth = 350),
   sidebar = dashboardSidebar(disable = T), 
   body = dashboardBody(
+    tabsetPanel(
+      tabPanel(title = "ONT usage",
+    
     fluidRow(
       box(width = 3, 
           dateRangeInput('dates',
@@ -74,6 +83,33 @@ ui <- dashboardPage(
           DTOutput('datatable')
       )
     )
+  ),
+  tabPanel('ONT output',
+           fluidRow(
+             box(
+               width = 3, 
+               dateRangeInput('dates2', 'Select dates for output calculation', 
+                              min = Sys.Date() - years(5), 
+                              max = Sys.Date() + years(1),
+                              separator = '--', 
+                              start = Sys.Date() - months(12)
+                              ),
+               selectizeInput('time_units', 'Select time unit for calculation', 
+                           choices = c('week', 'month', 'year'), 
+                           selected = 'month'),
+               selectizeInput('output_units', 'Select output unit for calculation', 
+                              choices = list('Flowcells' = 'n', 'Bases' = 'sum_bases', 'Reads' = 'sum_reads'), 
+                              selected = 'n')
+               ),
+             box(
+               width = 9,
+               highchartOutput('output_graph')
+                 )
+             )
+          ),
+  tabPanel('PacBio usage'),
+  tabPanel('PacBio output')
+    )
   )
 )
 
@@ -82,6 +118,10 @@ server <- function(input, output, session) {
   
   dfr <- reactive({
     df[df$start >= input$dates[1] & df$end <= input$dates[2], ]
+  })
+  
+  dfr2 <- reactive({
+    df[df$start >= input$dates2[1] & df$end <= input$dates2[2], ]
   })
   
   dfr_merged <- reactive({
@@ -203,13 +243,29 @@ server <- function(input, output, session) {
               )
   })
   
-  # OBSERVERS
-  
-  # color gradient
-  observe({
-    #updateDateRangeInput(session, 'dates', )
-    print(input$datatable_rows_all)
+  output$output_graph <- renderHighchart({
+    mydata <- dfr2() %>% 
+      group_by(group) %>%
+      reframe(m = lubridate::floor_date(start, unit = input$time_units), reads_pass, bases_pass) %>%
+      mutate(m = as.Date(m)) %>% 
+      complete(m = seq.Date(min(m), max(m), by = input$time_units), group) %>%
+      group_by(m, group) %>%
+      reframe(n = n(), sum_reads = sum(reads_pass, na.rm = TRUE), sum_bases = sum(bases_pass, na.rm = TRUE))
+      
+    highchart() %>%
+      hc_add_series(mydata, 'column', 
+                    hcaes_string(x = 'm', 
+                          y = input$output_units, 
+                          group = 'group')
+                    ) %>%
+      hc_xAxis(type = 'datetime') %>%
+      hc_yAxis(title = list(text = input$output_units)) %>%
+      hc_add_theme(hc_theme_google()) %>%
+      hc_title(text = paste0('Output per ', input$time_units, ' and platform')) %>%
+      hc_subtitle(text = paste0('Data from ', input$dates2[1], ' to ', input$dates2[2]))
   })
+  
+  # OBSERVERS
   
   # focus timevis based on DT selection
   #proxy <- dataTableProxy('datatable')
@@ -217,7 +273,7 @@ server <- function(input, output, session) {
   observe({
     mydate <- dfr()[input$datatable_rows_selected, ]$start
     myitemid <- dfr()[input$datatable_rows_selected, ]$id
-    tv_selected <- input$usage_timevis_selected
+    #tv_selected <- input$usage_timevis_selected
     
     timevis::centerTime('usage_timevis', mydate) %>%
       timevis::setSelection(itemId = myitemid)

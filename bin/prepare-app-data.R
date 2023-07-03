@@ -48,9 +48,9 @@ df <- df1 %>%
   ) %>%
   arrange(start)
 
-dfmerged <- df %>%
-  merge_overlaps(start, end, group)
+# dfmerged <- df %>%
+#   merge_overlaps(start, end, group)
 
 write.csv(df, file = 'data/df.csv', row.names = F)
-saveRDS(dfmerged, file = 'data/dfmerged.rds')
+#saveRDS(dfmerged, file = 'data/dfmerged.rds')
 
