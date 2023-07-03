@@ -78,10 +78,12 @@ ui <- dashboardPage(
           htmlOutput('selected_dates')
           ),
       box(width = 12,
-          timevisOutput('usage_timevis'),
-          downloadButton('download', 'Download data'),
+          timevisOutput('usage_timevis')
+          #downloadButton('download', 'Download data'),
+      ),
+      box(width = 12,
           DTOutput('datatable')
-      )
+          )
     )
   ),
   tabPanel('ONT output',
@@ -105,7 +107,12 @@ ui <- dashboardPage(
                width = 9,
                highchartOutput('output_graph')
                  )
-             )
+             ),
+           fluidRow(
+             box(width = 12, 
+                 dataTableOutput('output_table')
+                 )
+           )
           ),
   tabPanel('PacBio usage'),
   tabPanel('PacBio output')
@@ -130,6 +137,19 @@ server <- function(input, output, session) {
   
   dfr_merged_total <- reactive({
     dfmerged_total[dfmerged_total$start <= input$dates[2] & dfmerged_total$end >= input$dates[1], ]
+  })
+  
+  ont_output_data <- reactive({
+    dfr2() %>% 
+      group_by(group) %>%
+      reframe(m = lubridate::floor_date(start, unit = input$time_units), reads_pass, bases_pass) %>%
+      mutate(m = as.Date(m)) %>% 
+      complete(m = seq.Date(min(m), max(m), by = input$time_units), group) %>%
+      group_by(m, group) %>%
+      reframe(n = if_else(is.na(bases_pass), 0, n()), # set count to 0 if no bases produced
+              sum_reads = sum(reads_pass, na.rm = TRUE), 
+              sum_bases = sum(bases_pass, na.rm = TRUE)) %>%
+      unique()
   })
   
   # outputs
@@ -215,14 +235,14 @@ server <- function(input, output, session) {
            )
   })
   
-  output$download <- downloadHandler(
-    filename = function() {
-      paste0('ontusage-', Sys.Date(), '.csv')
-    },
-    content = function(file) {
-      write.csv(df, file, row.names = F)
-    }
-  )
+  # output$download <- downloadHandler(
+  #   filename = function() {
+  #     paste0('ontusage-', Sys.Date(), '.csv')
+  #   },
+  #   content = function(file) {
+  #     write.csv(df, file, row.names = F)
+  #   }
+  # )
   
   output$datatable <- renderDataTable({
     mydata <- 
@@ -232,28 +252,24 @@ server <- function(input, output, session) {
       dplyr::select(c('start_date', 'flowcell', 'group', 'sample_id', 'title', 'mean_qscore'))
 
     datatable(mydata, 
+              rownames = FALSE,
+              extensions = 'Buttons',
               filter = 'top', 
               selection = 'single', 
               class = 'hover',
               options = list(
+                buttons = c('copy', 'csv', 'excel'),
                 searchHighlight = TRUE,
-                pageLength = 20,
+                pageLength = 50,
                 autoWidth = TRUE, 
-                dom = 'tp')
+                dom = 'Btp')
               )
   })
   
   output$output_graph <- renderHighchart({
-    mydata <- dfr2() %>% 
-      group_by(group) %>%
-      reframe(m = lubridate::floor_date(start, unit = input$time_units), reads_pass, bases_pass) %>%
-      mutate(m = as.Date(m)) %>% 
-      complete(m = seq.Date(min(m), max(m), by = input$time_units), group) %>%
-      group_by(m, group) %>%
-      reframe(n = n(), sum_reads = sum(reads_pass, na.rm = TRUE), sum_bases = sum(bases_pass, na.rm = TRUE))
       
     highchart() %>%
-      hc_add_series(mydata, 'column', 
+      hc_add_series(ont_output_data(), 'column', 
                     hcaes_string(x = 'm', 
                           y = input$output_units, 
                           group = 'group')
@@ -262,9 +278,35 @@ server <- function(input, output, session) {
       hc_yAxis(title = list(text = input$output_units)) %>%
       hc_add_theme(hc_theme_google()) %>%
       hc_title(text = paste0('Output per ', input$time_units, ' and platform')) %>%
-      hc_subtitle(text = paste0('Data from ', input$dates2[1], ' to ', input$dates2[2]))
+      hc_subtitle(text = paste0('Data from ', input$dates2[1], ' to ', input$dates2[2])) %>%
+      hc_caption(text = paste0(
+        'For selected time range: ',
+        sum(ont_output_data()$n, na.rm = T), ' flowcells, ',
+        siformat(sum(ont_output_data()$sum_reads, na.rm = T)), ' reads, ',
+        siformat(sum(ont_output_data()$sum_bases, na.rm = T)), ' bases. Only pass reads/bases are considered.'
+      )
+                 )
   })
   
+  output$output_table <- renderDataTable({
+    datatable(ont_output_data(),
+              extensions = 'Buttons',
+              rownames = FALSE, 
+              filter = 'top', 
+              selection = 'single', 
+              class = 'hover', 
+              options = list(
+                buttons = c('copy', 'csv', 'excel'),
+                searchHighlight = TRUE,
+                autoWidth = TRUE, 
+                #lengthMenu = list(c(10, 50, -1), c('10', '50', 'All')),
+                info = FALSE,
+                pageLength = 50,
+                dom = 'Btp' #https://datatables.net/reference/option/dom
+              )
+              )
+  })
+    
   # OBSERVERS
   
   # focus timevis based on DT selection
