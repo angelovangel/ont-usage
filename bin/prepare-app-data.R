@@ -43,7 +43,7 @@ df <- df1 %>%
     siformat(bases_pass), ' bases | ', 
     siformat(reads_pass), ' reads | ',
     round(ratio * 100, 0), '% failed | ',
-    'qscore ',mean_qscore
+    'qscore ', mean_qscore, ' | N50 ', nx_pass 
   )
   ) %>%
   arrange(start)

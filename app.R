@@ -66,8 +66,8 @@ ui <- dashboardPage(
           #                multiple = T),
           checkboxInput('stack', 'Expand items', value = FALSE),
           radioButtons('color', 'Color flowcells by', inline = T,
-                       choiceNames = c('Mean Q-score', 'Failed bases %'),
-                       choiceValues = c('style_qscore', 'style_failed'), selected = 'style_failed')
+                       choiceNames = c('Mean Q-score', 'N50','Failed bases %'),
+                       choiceValues = c('style_qscore', 'style_nx', 'style_failed'), selected = 'style_failed')
                        # these match the df.csv columns
           ),
   
@@ -96,10 +96,10 @@ ui <- dashboardPage(
                               separator = '--', 
                               start = Sys.Date() - months(12)
                               ),
-               selectizeInput('time_units', 'Select time unit for calculation', 
+               selectizeInput('time_units', 'Select time unit to aggregate data', 
                            choices = c('week', 'month', 'year'), 
                            selected = 'month'),
-               selectizeInput('output_units', 'Select output unit for calculation', 
+               selectizeInput('output_units', 'Select output unit', 
                               choices = list('Flowcells' = 'fc', 'Bases' = 'sum_bases', 'Reads' = 'sum_reads'), 
                               selected = 'fc'),
                checkboxInput('ont_output_type', 'Cumulative output', value = FALSE)
@@ -251,7 +251,7 @@ server <- function(input, output, session) {
       dfr() %>%
       #dplyr::filter(sample_id %in% input$sampleids) %>%
       mutate(start_date = as.Date(start)) %>%
-      dplyr::select(c('start_date', 'flowcell', 'group', 'sample_id', 'title', 'mean_qscore'))
+      dplyr::select(c('start_date', 'flowcell', 'group', 'sample_id', 'reads_pass', 'bases_pass', 'mean_qscore', 'nx_pass'))
 
     datatable(mydata, 
               caption = paste0('ONT usage raw data from ',input$dates[1], ' to ', input$dates[2], '.' ),
