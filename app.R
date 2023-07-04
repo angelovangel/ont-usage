@@ -254,6 +254,7 @@ server <- function(input, output, session) {
       dplyr::select(c('start_date', 'flowcell', 'group', 'sample_id', 'title', 'mean_qscore'))
 
     datatable(mydata, 
+              caption = paste0('ONT usage raw data from ',input$dates[1], ' to ', input$dates[2], '.' ),
               rownames = FALSE,
               extensions = 'Buttons',
               filter = 'top', 
@@ -272,7 +273,7 @@ server <- function(input, output, session) {
       
     highchart() %>%
       hc_add_series(data = ont_output_data(), 
-                    'column', 
+                    type = if_else(input$ont_output_type, 'line', 'column'), 
                     hcaes_string(x = 'm', y = input$output_units, group = 'group')
                     ) %>%
       hc_xAxis(type = 'datetime') %>%
@@ -291,6 +292,9 @@ server <- function(input, output, session) {
   
   output$output_table <- renderDataTable({
     datatable(ont_output_data(),
+              caption = paste0('ONT output raw data from ',
+                               input$dates2[1],' to ', input$dates2[2], 
+                               ', aggregated by ', input$time_units, '.'),
               extensions = 'Buttons',
               rownames = FALSE, 
               filter = 'top', 
