@@ -100,8 +100,9 @@ ui <- dashboardPage(
                            choices = c('week', 'month', 'year'), 
                            selected = 'month'),
                selectizeInput('output_units', 'Select output unit for calculation', 
-                              choices = list('Flowcells' = 'n', 'Bases' = 'sum_bases', 'Reads' = 'sum_reads'), 
-                              selected = 'n')
+                              choices = list('Flowcells' = 'fc', 'Bases' = 'sum_bases', 'Reads' = 'sum_reads'), 
+                              selected = 'fc'),
+               checkboxInput('ont_output_type', 'Cumulative output', value = FALSE)
                ),
              box(
                width = 9,
@@ -141,15 +142,16 @@ server <- function(input, output, session) {
   
   ont_output_data <- reactive({
     dfr2() %>% 
-      group_by(group) %>%
-      reframe(m = lubridate::floor_date(start, unit = input$time_units), reads_pass, bases_pass) %>%
-      mutate(m = as.Date(m)) %>% 
-      complete(m = seq.Date(min(m), max(m), by = input$time_units), group) %>%
+      #group_by(group) %>%
+      mutate(m = lubridate::floor_date(start, unit = input$time_units)) %>%
+      mutate(m = as.Date(m), c = 1) %>%   # used to count flow cells 
+      complete(m = seq.Date(min(m), max(m), by = input$time_units), group, fill = list(c = 0)) %>%
       group_by(m, group) %>%
-      reframe(n = if_else(is.na(bases_pass), 0, n()), # set count to 0 if no bases produced
+      reframe(fc = sum(c, na.rm = TRUE), # set count to 0 if no bases produced
               sum_reads = sum(reads_pass, na.rm = TRUE), 
               sum_bases = sum(bases_pass, na.rm = TRUE)) %>%
-      unique()
+      group_by(group) %>%
+      mutate(cum_reads = cumsum(sum_reads), cum_bases = cumsum(sum_bases), cum_fc = cumsum(fc))
   })
   
   # outputs
@@ -269,10 +271,9 @@ server <- function(input, output, session) {
   output$output_graph <- renderHighchart({
       
     highchart() %>%
-      hc_add_series(ont_output_data(), 'column', 
-                    hcaes_string(x = 'm', 
-                          y = input$output_units, 
-                          group = 'group')
+      hc_add_series(data = ont_output_data(), 
+                    'column', 
+                    hcaes_string(x = 'm', y = input$output_units, group = 'group')
                     ) %>%
       hc_xAxis(type = 'datetime') %>%
       hc_yAxis(title = list(text = input$output_units)) %>%
@@ -281,7 +282,7 @@ server <- function(input, output, session) {
       hc_subtitle(text = paste0('Data from ', input$dates2[1], ' to ', input$dates2[2])) %>%
       hc_caption(text = paste0(
         'For selected time range: ',
-        sum(ont_output_data()$n, na.rm = T), ' flowcells, ',
+        sum(ont_output_data()$fc, na.rm = T), ' flowcells, ',
         siformat(sum(ont_output_data()$sum_reads, na.rm = T)), ' reads, ',
         siformat(sum(ont_output_data()$sum_bases, na.rm = T)), ' bases. Only pass reads/bases are considered.'
       )
@@ -309,8 +310,17 @@ server <- function(input, output, session) {
     
   # OBSERVERS
   
-  # focus timevis based on DT selection
-  #proxy <- dataTableProxy('datatable')
+  # change ONT graph output to cumulative
+  observeEvent(input$ont_output_type, {
+      updateSelectizeInput(
+        session, 'output_units',
+        choices = if(input$ont_output_type == FALSE) {
+          list('Flowcells' = 'fc', 'Bases' = 'sum_bases', 'Reads' = 'sum_reads')
+          } else {
+            list('Flowcells' = 'cum_fc', 'Bases' = 'cum_bases', 'Reads' = 'cum_reads')
+            },
+        selected = if(input$ont_output_type == FALSE) {'fc'} else {'cum_fc'})
+  }, ignoreInit = TRUE, )
   
   observe({
     mydate <- dfr()[input$datatable_rows_selected, ]$start
