@@ -24,7 +24,8 @@ siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
 # data loaded once for all sessions
 df <- vroom('data/df.csv') %>% 
   mutate(group = factor(group))
-flowcells <- na.exclude(df$flowcell)
+
+#flowcells <- na.exclude(df$flowcell_id)
   
 
 dfmerged <- df %>% 
@@ -248,10 +249,11 @@ server <- function(input, output, session) {
   
   output$datatable <- renderDataTable({
     mydata <- 
-      dfr() %>%
+      df %>%
       #dplyr::filter(sample_id %in% input$sampleids) %>%
       mutate(start_date = as.Date(start)) %>%
-      dplyr::select(c('start_date', 'flowcell', 'group', 'sample_id', 'reads_pass', 'bases_pass', 'mean_qscore', 'nx_pass'))
+      dplyr::select(c('start_date', 'id', 'pi', 'group', 'sample_id', 
+                      'reads_pass', 'bases_pass', 'mean_qscore', 'nx_pass'))
 
     datatable(mydata, 
               caption = paste0('ONT usage raw data from ',input$dates[1], ' to ', input$dates[2], '.' ),
