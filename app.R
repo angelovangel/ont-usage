@@ -16,7 +16,7 @@ library(lubridate)
 library(ivs) # https://cran.r-project.org/web/packages/ivs/vignettes/ivs.html
 library(vctrs)
 library(highcharter)
-library(digest)
+#library(digest)
 library(scales)
 
 siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
@@ -34,7 +34,12 @@ groups_df <- data.frame(
 # 
 ui <- dashboardPage(
   skin = 'green',
-  header = dashboardHeader(title = 'TGS machine usage (BCL)', titleWidth = 350),
+  header = dashboardHeader(title = 'TGS machine usage (BCL)', titleWidth = 350,
+                           dropdownMenu(type = 'notifications', 
+                                        notificationItem(
+                                          text = paste0('ONT data update: ', file.mtime('data/df.csv')))
+                                        )
+                           ),
   sidebar = dashboardSidebar(disable = T), 
   body = dashboardBody(
     tabsetPanel(
@@ -161,13 +166,6 @@ server <- function(input, output, session) {
   
   dfr2 <- reactive({
     dfr2_module()[dfr2_module()$start >= input$dates2[1] & dfr2_module()$end <= input$dates2[2], ]
-    # d <- df[df$start >= input$dates2[1] & df$end <= input$dates2[2], ]
-    # if (input$ont_output_division == ''){
-    #   d
-    # } else {
-    #   d[d$division == input$ont_output_division, ]
-    # }
-    
   })
   
   dfr_merged <- reactive({
@@ -227,9 +225,12 @@ server <- function(input, output, session) {
   # This is below the value boxes
   output$selected_dates <- renderPrint({
     tags$p(
-      # paste0("The data is filtered: ",
-      #        input$dates[1], ' - ', input$dates[2], " / ",
-      #        input$usage_division, " / ", input$usage_pi)
+      paste0("The data is filtered: ",
+             input$dates[1], ' - ', input$dates[2], " / ", 
+             #https://stackoverflow.com/questions/63908116/viewing-selected-values-of-selectizegroup-module-parameters
+             str_flatten( input[["ont-usage-filters-division"]], collapse = " / "), " / ",
+             str_flatten( input[["ont-usage-filters-pi_name"]], collapse = " / ")
+             )
        )
   })
     
@@ -260,6 +261,7 @@ server <- function(input, output, session) {
     prom_time <- sum(dfr_merged()[dfr_merged()$group == 'prom', ]$dur, na.rm = T) %>% as.duration()
     total_time <- sum(dfr_merged_total()$dur, na.rm = T) %>% as.duration()
     selected_time <- (input$dates[2] - input$dates[1]) %>% as.duration()
+    runscount <-  length(unique(dfr()$flowcell_id.x))
     
     
     total_usage <- paste0(round(total_time/selected_time*100, 0), ' % usage')
@@ -268,7 +270,7 @@ server <- function(input, output, session) {
       
     valueBox(value = tags$p(total_usage, style = "font-size: 80%; font-weight:normal;"),
              subtitle = HTML(paste0(
-               '<b>', nrow(dfr()), '</b> runs', '<br>',
+               '<b>', runscount, '</b> runs', '<br>',
                'prom <b>' , prom_usage, 
                '</b><br> grid <b>', grid_usage
                )),
@@ -351,7 +353,7 @@ server <- function(input, output, session) {
       hc_subtitle(text = paste0('Data from ', input$dates2[1], ' to ', input$dates2[2])) %>%
       hc_caption(text = paste0(
         'For selected time range: ',
-        sum(ont_output_data()$fc, na.rm = T), ' flowcells, ',
+        sum(ont_output_data()$fc, na.rm = T), ' runs, ',
         siformat(sum(ont_output_data()$sum_reads, na.rm = T)), ' reads, ',
         siformat(sum(ont_output_data()$sum_bases, na.rm = T)), ' bases. Only pass reads/bases are considered.'
       )
