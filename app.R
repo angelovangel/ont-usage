@@ -6,6 +6,7 @@ library(vroom)
 library(purrr)
 library(shiny)
 library(shinydashboard)
+library(shinyWidgets)
 library(DT)
 library(timevis)
 library(stringr)
@@ -40,7 +41,7 @@ ui <- dashboardPage(
       tabPanel(title = "ONT usage",
     
     fluidRow(
-      box(width = 4, 
+      box(width = 3, 
           dateRangeInput('dates',
                          'Select interval for usage calculation', 
                          min = Sys.Date() - years(5), 
@@ -54,14 +55,16 @@ ui <- dashboardPage(
                        choiceValues = c('style_qscore', 'style_nx', 'style_failed'), selected = 'style_failed')
                        # these match the df.csv columns
           ),
-      box(width = 3, 
-          selectizeInput('usage_division', '', 
-                      choices = c('Filter by division' = '', df$division)
-                      ),
-          selectInput('usage_pi', '', 
-                      choices = c('Filter by PI' = '', df$pi_name)
-                      )
-          ),
+      box(width = 4, 
+          selectizeGroupUI(
+            id = 'ont-usage-filters', 
+            label = 'Filter data by Division and PI',
+            params = list(
+              division = list(inputId = 'division', title = 'Division'),
+              pi_name = list(inputId = 'pi_name', title = 'PI name')
+            )
+          )
+        ),
   
       box(width = 5, 
           #valueBoxOutput('output'), 
@@ -90,19 +93,34 @@ ui <- dashboardPage(
                               separator = '--', 
                               start = Sys.Date() - months(12)
                               ),
-               selectizeInput('time_units', 'Select time unit to aggregate data', 
-                           choices = c('week', 'month', 'year'), 
+               
+               selectizeGroupUI(
+                 id = 'ont-output-filters', 
+                 #label = 'Filter data by Division and PI',
+                 params = list(
+                   division = list(inputId = 'division', title = 'Division'),
+                   pi_name = list(inputId = 'pi_name', title = 'PI name')
+                 )
+               ),
+               selectizeInput('time_units', 'Select time unit to aggregate data',
+                           choices = c('week', 'month', 'year'),
                            selected = 'month'),
-               selectizeInput('output_units', 'Select output unit', 
-                              choices = list('Flowcells' = 'fc', 'Bases' = 'sum_bases', 'Reads' = 'sum_reads'), 
+               selectizeInput('output_units', 'Select output unit',
+                              choices = list('Flowcells' = 'fc', 'Bases' = 'sum_bases', 'Reads' = 'sum_reads'),
                               selected = 'fc'),
-               checkboxInput('ont_output_type', 'Cumulative output', value = FALSE),
-               selectizeInput('ont_output_division', '', 
-                              choices = c('Filter by division' = '', df$division)
-                              ),
-               selectInput('ont_output_pi', '', 
-                           choices = c('Filter by PI' = '', df$pi_name)
-                           )
+               
+               fluidRow(
+               column(width = 6, checkboxInput('ont_output_type', 'Cumulative output', value = FALSE)),
+               column(width = 6, checkboxInput('ont_output_plotbydivision', 'Plot by division', value = FALSE))
+               )
+               
+               
+               # selectizeInput('ont_output_division', '', 
+               #                choices = c('Filter by division' = '', df$division[!is.na(df$division)])
+               #                ),
+               # selectInput('ont_output_pi', '', 
+               #             choices = c('Filter by PI' = '', df$pi_name)
+               #             )
                ),
              box(width = 3, 
                  valueBoxOutput('ont_flowcells', width = 12),
@@ -127,17 +145,29 @@ ui <- dashboardPage(
 server <- function(input, output, session) {
   # reactives
   
+  dfr_module <- callModule(
+    module = selectizeGroupServer,
+    id = 'ont-usage-filters', data = df, vars = c('division', 'pi_name')
+  )
+  
   dfr <- reactive({
-    d <- df[df$start >= input$dates[1] & df$end <= input$dates[2], ]
-    if (input$usage_division == '') {
-      d
-    } else {
-      d[d$division == input$usage_division, ]
-    }
+    dfr_module()[dfr_module()$start >= input$dates[1] & dfr_module()$end <= input$dates[2], ]
   })
   
+  dfr2_module <- callModule(
+    module = selectizeGroupServer, 
+    id = 'ont-output-filters', data = df, vars = c('division', 'pi_name')
+  )
+  
   dfr2 <- reactive({
-    df[df$start >= input$dates2[1] & df$end <= input$dates2[2], ]
+    dfr2_module()[dfr2_module()$start >= input$dates2[1] & dfr2_module()$end <= input$dates2[2], ]
+    # d <- df[df$start >= input$dates2[1] & df$end <= input$dates2[2], ]
+    # if (input$ont_output_division == ''){
+    #   d
+    # } else {
+    #   d[d$division == input$ont_output_division, ]
+    # }
+    
   })
   
   dfr_merged <- reactive({
@@ -159,14 +189,17 @@ server <- function(input, output, session) {
       #group_by(group) %>%
       mutate(m = lubridate::floor_date(start, unit = input$time_units)) %>%
       mutate(m = as.Date(m), c = 1) %>%   # used to count flow cells 
-      complete(m = seq.Date(min(m), max(m), by = input$time_units), group, fill = list(c = 0)) %>%
+      complete(m = seq.Date(from = min(m, na.rm = T), to = max(m, na.rm = T), 
+                            by = input$time_units), group, fill = list(c = 0)
+               ) %>%
       group_by(m, group) %>%
       reframe(fc = sum(c, na.rm = TRUE), # set count to 0 if no bases produced
               sum_reads = sum(reads_pass, na.rm = TRUE), 
               sum_bases = sum(bases_pass, na.rm = TRUE)) %>%
       group_by(group) %>%
-      mutate(cum_reads = cumsum(sum_reads), cum_bases = cumsum(sum_bases), cum_fc = cumsum(fc))
-  })
+      mutate(cum_reads = cumsum(sum_reads), cum_bases = cumsum(sum_bases), cum_fc = cumsum(fc)) 
+   })
+  
   
   # outputs
   output$usage_timevis <- renderTimevis({
@@ -194,10 +227,10 @@ server <- function(input, output, session) {
   # This is below the value boxes
   output$selected_dates <- renderPrint({
     tags$p(
-      paste0("The data is filtered: ",
-             input$dates[1], ' - ', input$dates[2], " / ",
-             input$usage_division, " / ", input$usage_pi)
-      )
+      # paste0("The data is filtered: ",
+      #        input$dates[1], ' - ', input$dates[2], " / ",
+      #        input$usage_division, " / ", input$usage_pi)
+       )
   })
     
   
@@ -271,14 +304,15 @@ server <- function(input, output, session) {
   
   ### ONT output
   output$ont_flowcells <- renderValueBox({
-    cellcounts <- dfr2() %>% count(group, .drop = F)
-    myvalue <- paste0(nrow(dfr2()), ' flowcells')
+    cellcounts <- dfr2() %>% group_by(group) %>% 
+      summarise(flowcell = length(unique(content)))
+    myvalue <- paste0(sum(cellcounts$flowcell, na.rm = T), ' flowcells')
     valueBox(
       color = 'green',
       value = tags$p(myvalue, style = "font-size: 80%; font-weight:normal;"),
       subtitle = HTML(paste0(
-        'prom <b>', cellcounts$n[cellcounts$group == 'prom'], '</b> <br>',
-        'grid <b>', cellcounts$n[cellcounts$group == 'grid']
+        'prom <b>', cellcounts$flowcell[cellcounts$group == 'prom'], '</b> <br>',
+        'grid <b>', cellcounts$flowcell[cellcounts$group == 'grid']
         ))
       )
   })
@@ -301,6 +335,9 @@ server <- function(input, output, session) {
   })
   
   output$output_graph <- renderHighchart({
+    validate(
+      need(nrow(dfr2()) >= 1, 'No data!')
+    )
       
     highchart() %>%
       hc_add_series(data = ont_output_data(), 
@@ -322,6 +359,10 @@ server <- function(input, output, session) {
   })
   
   output$output_table <- renderDataTable({
+    validate(
+      need(nrow(dfr2()) >= 1, 'No data!')
+    )
+    
     datatable(ont_output_data(),
               caption = paste0('ONT output raw data from ',
                                input$dates2[1],' to ', input$dates2[2], 
@@ -345,10 +386,10 @@ server <- function(input, output, session) {
     
   # OBSERVERS
   # update PI selectizeInput
-  observe({
-    updateSelectizeInput(session, 'usage_pi', 
-                         choices = c('Filter by PI' = '', dfr()$pi_name)) # genious
-  })
+  # observe({
+  #   updateSelectizeInput(session, 'usage_pi', 
+  #                        choices = c('Filter by PI' = '', dfr()$pi_name)) # genious
+  # })
   
   # change ONT graph output to cumulative
   observeEvent(input$ont_output_type, {
