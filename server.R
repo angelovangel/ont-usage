@@ -1,151 +1,3 @@
-#
-# ont-usage Shiny app (BCL)
-
-library(optparse)
-library(vroom)
-library(purrr)
-library(shiny)
-library(shinydashboard)
-library(shinyWidgets)
-library(DT)
-library(timevis)
-library(stringr)
-library(dplyr)
-library(tidyr)
-library(lubridate)
-library(ivs) # https://cran.r-project.org/web/packages/ivs/vignettes/ivs.html
-library(vctrs)
-library(highcharter)
-#library(digest)
-library(scales)
-
-siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
-
-
-# data loaded once for all sessions
-df <- vroom('data/df.csv') %>% 
-  mutate(group = factor(group))
-
-groups_df <- data.frame(
-  id = c('grid', 'prom'),
-  content = c('GridION', 'PromethION')
-)
-
-# 
-ui <- dashboardPage(
-  skin = 'green',
-  header = dashboardHeader(title = 'TGS machine usage (BCL)', titleWidth = 350,
-                           dropdownMenu(type = 'notifications', 
-                                        notificationItem(
-                                          text = paste0('ONT data update: ', file.mtime('data/df.csv')))
-                                        )
-                           ),
-  sidebar = dashboardSidebar(disable = T), 
-  body = dashboardBody(
-    tabsetPanel(
-      tabPanel(title = "ONT usage",
-    
-    fluidRow(
-      box(width = 3, 
-          dateRangeInput('dates',
-                         'Select interval for usage calculation', 
-                         min = Sys.Date() - years(5), 
-                         max = Sys.Date() + years(1),
-                         separator = '--', 
-                         start = Sys.Date() - months(3)),
-          
-          checkboxInput('stack', 'Expand items', value = FALSE),
-          radioButtons('color', 'Color flowcells by', inline = T,
-                       choiceNames = c('Q-score', 'N50','Failed bases %'),
-                       choiceValues = c('style_qscore', 'style_nx', 'style_failed'), selected = 'style_failed')
-                       # these match the df.csv columns
-          ),
-      box(width = 4, 
-          selectizeGroupUI(
-            id = 'ont-usage-filters', 
-            label = 'Filter data by Division and PI',
-            params = list(
-              division = list(inputId = 'division', title = 'Division'),
-              pi_name = list(inputId = 'pi_name', title = 'PI name')
-            )
-          )
-        ),
-  
-      box(width = 5, 
-          #valueBoxOutput('output'), 
-          fluidRow(
-            valueBoxOutput('ont_runhours', width = 6), 
-            valueBoxOutput('ont_usage', width = 6)
-            ),
-          htmlOutput('selected_dates')
-          ),
-      box(width = 12,
-          timevisOutput('usage_timevis')
-          #downloadButton('download', 'Download data'),
-      ),
-      box(width = 12,
-          DTOutput('datatable')
-          )
-    )
-  ),
-  tabPanel('ONT output',
-           fluidRow(
-             box(
-               width = 3, 
-               dateRangeInput('dates2', 'Select dates for output calculation', 
-                              min = Sys.Date() - years(5), 
-                              max = Sys.Date() + years(1),
-                              separator = '--', 
-                              start = Sys.Date() - months(12)
-                              ),
-               
-               selectizeGroupUI(
-                 id = 'ont-output-filters', 
-                 #label = 'Filter data by Division and PI',
-                 params = list(
-                   division = list(inputId = 'division', title = 'Division'),
-                   pi_name = list(inputId = 'pi_name', title = 'PI name')
-                 )
-               ),
-               selectizeInput('time_units', 'Select time unit to aggregate data',
-                           choices = c('week', 'month', 'year'),
-                           selected = 'month'),
-               selectizeInput('output_units', 'Select output unit',
-                              choices = list('Flowcells' = 'fc', 'Bases' = 'sum_bases', 'Reads' = 'sum_reads'),
-                              selected = 'fc'),
-               
-               fluidRow(
-               column(width = 6, checkboxInput('ont_output_type', 'Cumulative output', value = FALSE)),
-               column(width = 6, checkboxInput('ont_output_plotbydivision', 'Plot by division', value = FALSE))
-               )
-               
-               
-               # selectizeInput('ont_output_division', '', 
-               #                choices = c('Filter by division' = '', df$division[!is.na(df$division)])
-               #                ),
-               # selectInput('ont_output_pi', '', 
-               #             choices = c('Filter by PI' = '', df$pi_name)
-               #             )
-               ),
-             box(width = 3, 
-                 valueBoxOutput('ont_flowcells', width = 12),
-                 valueBoxOutput('ont_output', width = 12)),
-             box(
-               width = 6,
-               highchartOutput('output_graph')
-                 )
-             ),
-           fluidRow(
-             box(width = 12, 
-                 dataTableOutput('output_table')
-                 )
-           )
-          ),
-  tabPanel('PacBio usage'),
-  tabPanel('PacBio output')
-    )
-  )
-)
 
 server <- function(input, output, session) {
   # reactives
@@ -184,24 +36,25 @@ server <- function(input, output, session) {
   
   ont_output_data <- reactive({
     dfr2() %>% 
-      #group_by(group) %>%
+      mutate( group = .data[[input$ont_output_groupby]] ) %>%
+      dplyr::filter(!is.na(group)) %>%
       mutate(m = lubridate::floor_date(start, unit = input$time_units)) %>%
       mutate(m = as.Date(m), c = 1) %>%   # used to count flow cells 
       complete(m = seq.Date(from = min(m, na.rm = T), to = max(m, na.rm = T), 
                             by = input$time_units), group, fill = list(c = 0)
-               ) %>%
+      ) %>%
       group_by(m, group) %>%
       reframe(fc = sum(c, na.rm = TRUE), # set count to 0 if no bases produced
               sum_reads = sum(reads_pass, na.rm = TRUE), 
               sum_bases = sum(bases_pass, na.rm = TRUE)) %>%
       group_by(group) %>%
       mutate(cum_reads = cumsum(sum_reads), cum_bases = cumsum(sum_bases), cum_fc = cumsum(fc)) 
-   })
+  })
   
   
   # outputs
   output$usage_timevis <- renderTimevis({
-    mydata <- df %>% mutate(style = .data[[input$color]])
+    mydata <- dfr() %>% mutate(style = .data[[input$color]])
     timevis(mydata, 
             groups = groups_df, fit = F,
             options = list(
@@ -214,12 +67,12 @@ server <- function(input, output, session) {
               zoomMin = 604800000, zoomMax = 31556926000, 
               clickToUse = FALSE, 
               stack = input$stack
-              )
-            ) %>% 
+            )
+    ) %>% 
       #addItems(data = dfmerged) %>%
       setSelection(itemId = last(df$id)) %>%
       setWindow(start = input$dates[1], end = input$dates[2])
-      
+    
   })
   
   # This is below the value boxes
@@ -230,10 +83,10 @@ server <- function(input, output, session) {
              #https://stackoverflow.com/questions/63908116/viewing-selected-values-of-selectizegroup-module-parameters
              str_flatten( input[["ont-usage-filters-division"]], collapse = " / "), " / ",
              str_flatten( input[["ont-usage-filters-pi_name"]], collapse = " / ")
-             )
-       )
+      )
+    )
   })
-    
+  
   
   output$ont_runhours <- renderValueBox({
     grid_time <- sum(dfr_merged()[dfr_merged()$group == 'grid', ]$dur, na.rm = T) %>% as.duration() %>% seconds_to_period()
@@ -267,13 +120,13 @@ server <- function(input, output, session) {
     total_usage <- paste0(round(total_time/selected_time*100, 0), ' % usage')
     grid_usage <- paste0(round(grid_time/selected_time*100, 0), ' %')
     prom_usage <- paste0(round(prom_time/selected_time*100, 0), ' %')
-      
+    
     valueBox(value = tags$p(total_usage, style = "font-size: 80%; font-weight:normal;"),
              subtitle = HTML(paste0(
                '<b>', runscount, '</b> runs', '<br>',
                'prom <b>' , prom_usage, 
                '</b><br> grid <b>', grid_usage
-               )),
+             )),
              color = 'green')
     
   })
@@ -286,7 +139,7 @@ server <- function(input, output, session) {
       mutate(start_date = as.Date(start)) %>%
       dplyr::select(c('start_date', 'id', 'flowcell_id.x','pi_name', 'division', 'group', 'sample_id', 
                       'reads_pass', 'bases_pass', 'mean_qscore', 'nx_pass'))
-
+    
     datatable(mydata, 
               caption = paste0('ONT usage raw data from ',input$dates[1], ' to ', input$dates[2], '.' ),
               rownames = FALSE,
@@ -298,10 +151,10 @@ server <- function(input, output, session) {
                 columnDefs = list(list(visible = FALSE, targets = 'id')),
                 buttons = c('copy', 'csv', 'excel'),
                 searchHighlight = TRUE,
-                pageLength = 50,
+                pageLength = 500,
                 autoWidth = TRUE, 
                 dom = 'Btp')
-              )
+    )
   })
   
   ### ONT output
@@ -315,8 +168,8 @@ server <- function(input, output, session) {
       subtitle = HTML(paste0(
         'prom <b>', cellcounts$flowcell[cellcounts$group == 'prom'], '</b> <br>',
         'grid <b>', cellcounts$flowcell[cellcounts$group == 'grid']
-        ))
-      )
+      ))
+    )
   })
   
   output$ont_output <- renderValueBox({
@@ -340,24 +193,26 @@ server <- function(input, output, session) {
     validate(
       need(nrow(dfr2()) >= 1, 'No data!')
     )
-      
+    
     highchart() %>%
       hc_add_series(data = ont_output_data(), 
                     type = if_else(input$ont_output_type, 'line', 'column'), 
-                    hcaes_string(x = 'm', y = input$output_units, group = 'group')
-                    ) %>%
+                    hcaes_string(
+                      x = 'm', 
+                      y = input$output_units,
+                      group = 'group')
+      ) %>%
       hc_xAxis(type = 'datetime') %>%
       hc_yAxis(title = list(text = input$output_units)) %>%
       hc_add_theme(hc_theme_google()) %>%
-      hc_title(text = paste0('Output per ', input$time_units, ' and platform')) %>%
+      hc_title(text = paste0('Output per ', input$time_units, ' and ', input$ont_output_groupby)) %>%
       hc_subtitle(text = paste0('Data from ', input$dates2[1], ' to ', input$dates2[2])) %>%
       hc_caption(text = paste0(
         'For selected time range: ',
         sum(ont_output_data()$fc, na.rm = T), ' runs, ',
         siformat(sum(ont_output_data()$sum_reads, na.rm = T)), ' reads, ',
-        siformat(sum(ont_output_data()$sum_bases, na.rm = T)), ' bases. Only pass reads/bases are considered.'
+        siformat(sum(ont_output_data()$sum_bases, na.rm = T)), ' bases. Only pass reads/bases are considered.')
       )
-                 )
   })
   
   output$output_table <- renderDataTable({
@@ -380,12 +235,12 @@ server <- function(input, output, session) {
                 autoWidth = TRUE, 
                 #lengthMenu = list(c(10, 50, -1), c('10', '50', 'All')),
                 info = FALSE,
-                pageLength = 50,
+                pageLength = 500,
                 dom = 'Btp' #https://datatables.net/reference/option/dom
               )
-              )
+    )
   })
-    
+  
   # OBSERVERS
   # update PI selectizeInput
   # observe({
@@ -395,14 +250,14 @@ server <- function(input, output, session) {
   
   # change ONT graph output to cumulative
   observeEvent(input$ont_output_type, {
-      updateSelectizeInput(
-        session, 'output_units',
-        choices = if(input$ont_output_type == FALSE) {
-          list('Flowcells' = 'fc', 'Bases' = 'sum_bases', 'Reads' = 'sum_reads')
-          } else {
-            list('Flowcells' = 'cum_fc', 'Bases' = 'cum_bases', 'Reads' = 'cum_reads')
-            },
-        selected = if(input$ont_output_type == FALSE) {'fc'} else {'cum_fc'})
+    updateSelectizeInput(
+      session, 'output_units',
+      choices = if(input$ont_output_type == FALSE) {
+        list('Flowcells' = 'fc', 'Bases' = 'sum_bases', 'Reads' = 'sum_reads')
+      } else {
+        list('Flowcells' = 'cum_fc', 'Bases' = 'cum_bases', 'Reads' = 'cum_reads')
+      },
+      selected = if(input$ont_output_type == FALSE) {'fc'} else {'cum_fc'})
   }, ignoreInit = TRUE, )
   
   observe({
@@ -416,5 +271,3 @@ server <- function(input, output, session) {
   })
   
 }
-
-shinyApp(ui = ui, server = server)

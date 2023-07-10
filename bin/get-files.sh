@@ -5,7 +5,7 @@
 # rsync -avrm --progress --include='20*/' --include='final_summary*' --exclude='*' prom@promethion.bcl.kaust.edu.sa:/data/ data/prom/
 # rsync -avrm --progress --include='20*/' --include='final_summary*' --exclude='*' grid@gridion.bcl.kaust.edu.sa:/data/ data/grid/
 
-echo "=== $(date) === starting get-files.sh, running rsync ..."
+echo "$(date +'%Y-%m-%d %H:%M:%S') === starting get-files.sh, running rsync ..."
 
 rsync -avm --progress \
 --include='*/' \
@@ -38,7 +38,7 @@ rsync -avm --progress \
 --exclude='*' \
 nanopore@mover.ibex.kaust.edu.sa:/encrypted0/biocorelab/Genomics/RawData/GridION/ data/grid/
 
-echo "=== $(date) === rsync done, will update data/counts.csv ..."
+echo "$(date +'%Y-%m-%d %H:%M:%S') === rsync done, will update data/counts.csv ..."
 # find all sequencing summary files:
 find data -type f -name '*sequencing_summary*' > data/seqsum.files
 
@@ -53,11 +53,11 @@ grep -vFf data/seqsum-fromcounts.files data/seqsum.files | parallel bin/count-se
  
 # process data to make a csv for app and sharing
 
-echo "=== $(date) === counts done, running process-files.R ..."
+echo "$(date +'%Y-%m-%d %H:%M:%S') === counts done, running process-files.R ..."
 bin/process-files.R -p prom -r data/prom.csv data/prom
 bin/process-files.R -p grid -r data/grid.csv data/grid
 
-echo "=== process-files.R done, running prepare-app-data.R ..."
+echo "$(date +'%Y-%m-%d %H:%M:%S') === process-files.R done, running prepare-app-data.R ..."
 bin/prepare-app-data.R
 
-echo "=== $(date) === Done"
+echo "$(date +'%Y-%m-%d %H:%M:%S') === Done"

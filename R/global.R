@@ -1,3 +1,33 @@
+library(optparse)
+library(vroom)
+library(purrr)
+library(shiny)
+library(shinydashboard)
+library(shinyWidgets)
+library(DT)
+library(timevis)
+library(stringr)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(ivs) # https://cran.r-project.org/web/packages/ivs/vignettes/ivs.html
+library(vctrs)
+library(highcharter)
+#library(digest)
+library(scales)
+
+siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
+
+
+# data loaded once for all sessions
+df <- vroom('data/df.csv') %>% 
+  mutate(group = factor(group))
+
+groups_df <- data.frame(
+  id = c('grid', 'prom'),
+  content = c('GridION', 'PromethION')
+)
+
 
 # heatmap for some values
 # pass x as argument, return hex
