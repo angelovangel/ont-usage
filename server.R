@@ -1,6 +1,7 @@
 
 server <- function(input, output, session) {
-  # reactives
+
+  #### REACTIVE DATA
   
   dfr_module <- callModule(
     module = selectizeGroupServer,
@@ -51,8 +52,10 @@ server <- function(input, output, session) {
       mutate(cum_reads = cumsum(sum_reads), cum_bases = cumsum(sum_bases), cum_fc = cumsum(fc)) 
   })
   
+  ### OUTPUTS
   
-  # outputs
+  ### ONT USAGE
+  
   output$usage_timevis <- renderTimevis({
     mydata <- dfr() %>% mutate(style = .data[[input$color]])
     timevis(mydata, 
@@ -86,7 +89,6 @@ server <- function(input, output, session) {
       )
     )
   })
-  
   
   output$ont_runhours <- renderValueBox({
     grid_time <- sum(dfr_merged()[dfr_merged()$group == 'grid', ]$dur, na.rm = T) %>% as.duration() %>% seconds_to_period()
@@ -131,7 +133,6 @@ server <- function(input, output, session) {
     
   })
   
-  
   output$datatable <- renderDataTable({
     mydata <- 
       dfr() %>%
@@ -157,7 +158,7 @@ server <- function(input, output, session) {
     )
   })
   
-  ### ONT output
+  ### ONT OUTPUT
   output$ont_flowcells <- renderValueBox({
     cellcounts <- dfr2() %>% group_by(group) %>% 
       summarise(flowcell = length(unique(content)))
@@ -241,14 +242,9 @@ server <- function(input, output, session) {
     )
   })
   
-  # OBSERVERS
-  # update PI selectizeInput
-  # observe({
-  #   updateSelectizeInput(session, 'usage_pi', 
-  #                        choices = c('Filter by PI' = '', dfr()$pi_name)) # genious
-  # })
+  ### OBSERVERS
   
-  # change ONT graph output to cumulative
+  # switch ONT graph output to cumulative
   observeEvent(input$ont_output_type, {
     updateSelectizeInput(
       session, 'output_units',
@@ -260,6 +256,7 @@ server <- function(input, output, session) {
       selected = if(input$ont_output_type == FALSE) {'fc'} else {'cum_fc'})
   }, ignoreInit = TRUE, )
   
+  # center timevis based on selection
   observe({
     mydate <- dfr()[input$datatable_rows_selected, ]$start
     myitemid <- dfr()[input$datatable_rows_selected, ]$id
