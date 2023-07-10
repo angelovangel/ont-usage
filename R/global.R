@@ -19,16 +19,6 @@ library(scales)
 siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
 
 
-# data loaded once for all sessions
-df <- vroom('data/df.csv') %>% 
-  mutate(group = factor(group))
-
-groups_df <- data.frame(
-  id = c('grid', 'prom'),
-  content = c('GridION', 'PromethION')
-)
-
-
 # heatmap for some values
 # pass x as argument, return hex
 my_temp_color <- function(x, xfrom, xto) {

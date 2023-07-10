@@ -1,6 +1,15 @@
 
 server <- function(input, output, session) {
-
+  
+  # data loaded once for each session
+  df <- vroom('data/df.csv') %>% 
+    mutate(group = factor(group))
+  
+  groups_df <- data.frame(
+    id = c('grid', 'prom'),
+    content = c('GridION', 'PromethION')
+  )
+  
   #### REACTIVE DATA
   
   dfr_module <- callModule(
