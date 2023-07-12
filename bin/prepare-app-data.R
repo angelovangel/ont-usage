@@ -12,8 +12,32 @@ siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
 
 processed_files <- list.files('data', pattern = 'grid.csv|prom.csv', full.names = T, recursive = F)
 count_files <- list.files('data', pattern = 'counts.csv', full.names = T, recursive = F)
+pb_dump_files <- list.files('data', pattern = 'smrtlink_dump', full.names = T, recursive = F)
 
 pis <- vroom('data/pis.tsv')
+
+# PacBio dump data
+df_pb <- map_df(pb_dump_files, ~vroom(.x, col_select = all_of(pb_columns)))
+
+df_pb <- 
+  df_pb %>% 
+  mutate(px = str_extract(string = str_c(run_name, cell_name, sep = "_"), pattern = '(?<=_)P[0-9]{1,2}')) %>% 
+  # fix non-conformant runs
+  mutate(
+    px = case_when(
+      str_detect(run_name, '_Peng') ~ 'P8', 
+      str_detect(run_name, '_Sara') ~ 'P1',
+      str_detect(run_name, '_Damien') ~ 'P27',
+      str_detect(run_name, 'SAT_') ~ 'P0',
+      str_detect(run_name, 'Training') ~ 'P0',
+      TRUE ~ px)
+    ) %>%
+  left_join(pis, by = c('px' = 'pi'))
+
+# fix 1 wrong run enddate
+df_pb[df_pb$run_uniqueId == '12d845e8-54f1-40d0-9580-f4a173023ae3',]$run_completedAt <- as_datetime("2019-05-06 08:36:59 UTC")
+write.csv(df_pb, file = 'data/df_pb.csv', row.names = F)
+
 df1 <- vroom(processed_files) %>% 
   dplyr::distinct() %>%
   mutate(type = 'range') %>%

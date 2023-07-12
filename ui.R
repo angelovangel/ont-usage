@@ -15,11 +15,11 @@ ui <- dashboardPage(
                fluidRow(
                  box(width = 3, 
                      dateRangeInput('dates',
-                                    'Select interval for usage calculation', 
+                                    'Select interval for ONT usage calculation', 
                                     min = Sys.Date() - years(5), 
                                     max = Sys.Date() + years(1),
                                     separator = '--', 
-                                    start = Sys.Date() - months(12)),
+                                    start = Sys.Date() - months(6)),
                      
                      checkboxInput('stack', 'Expand items', value = FALSE),
                      radioButtons('color', 'Color flowcells by', inline = T,
@@ -51,7 +51,7 @@ ui <- dashboardPage(
                      #downloadButton('download', 'Download data'),
                  ),
                  box(width = 12,
-                     DTOutput('datatable')
+                     dataTableOutput('datatable')
                  )
                )
       ),
@@ -59,7 +59,7 @@ ui <- dashboardPage(
                fluidRow(
                  box(
                    width = 3, 
-                   dateRangeInput('dates2', 'Select dates for output calculation', 
+                   dateRangeInput('dates2', 'Select interval for ONT output calculation', 
                                   min = Sys.Date() - years(5), 
                                   max = Sys.Date() + years(1),
                                   separator = '--', 
@@ -100,7 +100,40 @@ ui <- dashboardPage(
                  )
                )
       ),
-      tabPanel('PacBio usage'),
+      tabPanel('PacBio usage', 
+               fluidRow(
+                box(width = 3,
+                  dateRangeInput('pb_dates', 'Select interval for PacBio usage calculation', 
+                                 min = Sys.Date() - years(10), 
+                                 max = Sys.Date() + years(1),
+                                 separator = '--', 
+                                 start = Sys.Date() - months(6)),
+                  radioButtons('pb_usage_color', 
+                               'Color cells by', inline = T,
+                               choiceNames = c('Reads', 'Control concordance'),
+                               choiceValues = c('style_reads', 'style_cconcordance'), 
+                               selected = 'style_reads'),
+                               
+                  checkboxInput('pb_stack', 'Expand items', value = FALSE)
+                ),
+                box(width = 4, selectizeGroupUI(
+                  id = 'pb-usage-filters',
+                  params = list(
+                    division = list(inputId = 'division', title = 'Division'),
+                    pi_name = list(inputId = 'pi_name', title = 'PI name')
+                  )
+                )
+                )
+               ),
+               fluidRow(
+                 box(width = 12,
+                   timevisOutput('pb_usage_timevis')
+                     ),
+                 box(width = 12, 
+                     dataTableOutput('pb_usage_datatable')
+                     )
+               )
+              ),
       tabPanel('PacBio output')
     )
   )

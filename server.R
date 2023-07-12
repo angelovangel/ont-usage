@@ -10,24 +10,50 @@ server <- function(input, output, session) {
     content = c('GridION', 'PromethION')
   )
   
+  df_pb <- vroom('data/df_pb.csv') %>%
+    mutate(group = factor(run_instrumentType))
+  
+  df_pb_groups <- data.frame(
+    id = c('Sequel', 'Sequel2', 'Sequel2e'), 
+    content = c('Sequel', 'Sequel2', 'Sequel2e')
+  ) 
+  
+  
+  
   #### REACTIVE DATA
   
-  dfr_module <- callModule(
+  df_module <- callModule(
     module = selectizeGroupServer,
     id = 'ont-usage-filters', data = df, vars = c('division', 'pi_name')
   )
   
   dfr <- reactive({
-    dfr_module()[dfr_module()$start >= input$dates[1] & dfr_module()$end <= input$dates[2], ]
+    df_module()[df_module()$start >= input$dates[1] & df_module()$end <= input$dates[2], ]
   })
   
-  dfr2_module <- callModule(
+  df_pb_module <- callModule(
+    module = selectizeGroupServer,
+    id = 'pb-usage-filters', data = df_pb, vars = c('division', 'pi_name')
+  )
+  
+  df_pb_r <- reactive({
+    d <- df_pb_module()[df_pb_module()$run_startedAt >= input$pb_dates[1] & df_pb_module()$run_completedAt <= input$pb_dates[2], ]
+    d %>%
+      mutate(
+        start = cell_startedAt,
+        end = cell_completedAt, 
+        content = cell_name
+      ) %>%
+      filter(!is.na(start) & !is.na(end))
+  })
+  
+  df2_module <- callModule(
     module = selectizeGroupServer, 
     id = 'ont-output-filters', data = df, vars = c('division', 'pi_name')
   )
   
   dfr2 <- reactive({
-    dfr2_module()[dfr2_module()$start >= input$dates2[1] & dfr2_module()$end <= input$dates2[2], ]
+    df2_module()[df2_module()$start >= input$dates2[1] & df2_module()$end <= input$dates2[2], ]
   })
   
   dfr_merged <- reactive({
@@ -73,7 +99,7 @@ server <- function(input, output, session) {
               #start = Sys.Date() - 30, 
               #end = Sys.Date() + 3, 
               min = Sys.Date() - years(5),
-              max = Sys.Date() + months(1), 
+              max = Sys.Date() + years(1), 
               maxHeight = '500px', 
               #minHeight = '300px', 
               zoomMin = 604800000, zoomMax = 31556926000, 
@@ -83,7 +109,7 @@ server <- function(input, output, session) {
     ) %>% 
       #addItems(data = dfmerged) %>%
       setSelection(itemId = last(df$id)) %>%
-      setWindow(start = input$dates[1], end = input$dates[2])
+      setWindow(start = input$dates[1], end = input$dates[2] + days(14))
     
   })
   
@@ -248,6 +274,44 @@ server <- function(input, output, session) {
                 pageLength = 500,
                 dom = 'Btp' #https://datatables.net/reference/option/dom
               )
+    )
+  })
+  
+  ### PB USAGE
+  output$pb_usage_timevis <- renderTimevis({
+    timevis(
+      df_pb_r(), fit = F, 
+      groups = df_pb_groups,
+      options = list(
+        stack = input$pb_stack
+      )
+    ) %>%
+    setWindow(start = input$pb_dates[1], end = input$pb_dates[2] + days(14))
+  })
+  
+  output$pb_usage_datatable <- renderDataTable({
+    mydata <- 
+      df_pb_r() %>%
+      #dplyr::filter(sample_id %in% input$sampleids) %>%
+      mutate(start_date = as.Date(start)) %>%
+      arrange(start_date) %>%
+      dplyr::select(c('start_date', 'group', 'run_name', 'cell_name','cell_status', 'division', 'pi_name', 
+                      'Unique Molecular Yield')
+                    )
+    datatable(mydata, 
+              caption = paste0('PacBio usage raw data from ',input$pb_dates[1], ' to ', input$pb_dates[2], '.' ),
+              rownames = FALSE,
+              extensions = 'Buttons',
+              filter = 'top', 
+              selection = 'single', 
+              class = 'hover',
+              options = list(
+                #columnDefs = list(list(visible = FALSE, targets = 'id')),
+                buttons = c('copy', 'csv', 'excel'),
+                searchHighlight = TRUE,
+                pageLength = 500,
+                autoWidth = TRUE, 
+                dom = 'Btp')
     )
   })
   
