@@ -12,7 +12,7 @@ siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
 
 processed_files <- list.files('data', pattern = 'grid.csv|prom.csv', full.names = T, recursive = F)
 count_files <- list.files('data', pattern = 'counts.csv', full.names = T, recursive = F)
-pb_dump_files <- list.files('data', pattern = 'smrtlink_dump', full.names = T, recursive = F)
+pb_dump_files <- list.files('data', pattern = 'smrtlink_dump_LATEST_', full.names = T, recursive = F)
 
 pis <- vroom('data/pis.tsv')
 
@@ -32,8 +32,22 @@ df_pb <-
       str_detect(run_name, 'Training') ~ 'P0',
       TRUE ~ px)
     ) %>%
-  left_join(pis, by = c('px' = 'pi'))
+  left_join(pis, by = c('px' = 'pi')) %>%
+  # these are factors to enable color assignment
+  mutate(division = factor(division), pi_portal = factor(pi_portal))
 
+divisions <- setNames(
+    levels(df_pb$division), 
+    my_levels_color(length(levels(df_pb$division)))
+    ) %>% 
+  stack()
+
+
+df_pb <- 
+  df_pb %>% 
+  left_join(divisions, by = c('division' = 'values')) %>% 
+  mutate(style_division = paste0('background-color: ', ind, ';'))
+  
 # fix 1 wrong run enddate
 df_pb[df_pb$run_uniqueId == '12d845e8-54f1-40d0-9580-f4a173023ae3',]$run_completedAt <- as_datetime("2019-05-06 08:36:59 UTC")
 write.csv(df_pb, file = 'data/df_pb.csv', row.names = F)

@@ -279,8 +279,11 @@ server <- function(input, output, session) {
   
   ### PB USAGE
   output$pb_usage_timevis <- renderTimevis({
+    mydata <- df_pb_r() %>%
+      mutate(style = .data[[input$pb_usage_color]])
+    
     timevis(
-      df_pb_r(), fit = F, 
+      mydata, fit = F, 
       groups = df_pb_groups,
       options = list(
         stack = input$pb_stack
@@ -295,7 +298,7 @@ server <- function(input, output, session) {
       #dplyr::filter(sample_id %in% input$sampleids) %>%
       mutate(start_date = as.Date(start)) %>%
       arrange(start_date) %>%
-      dplyr::select(c('start_date', 'group', 'run_name', 'cell_name','cell_status', 'division', 'pi_name', 
+      dplyr::select(c('start_date', 'group', 'run_name', 'run_context', 'cell_name','cell_status', 'division', 'pi_name', 
                       'Unique Molecular Yield')
                     )
     datatable(mydata, 

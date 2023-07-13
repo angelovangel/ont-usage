@@ -110,9 +110,9 @@ ui <- dashboardPage(
                                  start = Sys.Date() - months(6)),
                   radioButtons('pb_usage_color', 
                                'Color cells by', inline = T,
-                               choiceNames = c('Reads', 'Control concordance'),
-                               choiceValues = c('style_reads', 'style_cconcordance'), 
-                               selected = 'style_reads'),
+                               choiceNames = c('Division', 'PI'),
+                               choiceValues = c('style_division', 'style_pi'), 
+                               selected = 'style_division'),
                                
                   checkboxInput('pb_stack', 'Expand items', value = FALSE)
                 ),
