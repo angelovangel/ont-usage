@@ -107,7 +107,7 @@ ui <- dashboardPage(
                                  min = Sys.Date() - years(10), 
                                  max = Sys.Date() + years(1),
                                  separator = '--', 
-                                 start = Sys.Date() - months(6)),
+                                 start = Sys.Date() - months(3)),
                   radioButtons('pb_usage_color', 
                                'Color cells by', inline = T,
                                choiceNames = c('Division', 'PI'),

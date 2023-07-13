@@ -52,6 +52,7 @@ df_pb <-
 df_pb[df_pb$run_uniqueId == '12d845e8-54f1-40d0-9580-f4a173023ae3',]$run_completedAt <- as_datetime("2019-05-06 08:36:59 UTC")
 write.csv(df_pb, file = 'data/df_pb.csv', row.names = F)
 
+# ONT data
 df1 <- vroom(processed_files) %>% 
   dplyr::distinct() %>%
   mutate(type = 'range') %>%

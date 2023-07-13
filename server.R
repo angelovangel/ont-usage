@@ -277,13 +277,13 @@ server <- function(input, output, session) {
     )
   })
   
-  ### PB USAGE
+  ## PB USAGE
   output$pb_usage_timevis <- renderTimevis({
     mydata <- df_pb_r() %>%
       mutate(style = .data[[input$pb_usage_color]])
-    
+
     timevis(
-      mydata, fit = F, 
+      mydata, fit = F,
       groups = df_pb_groups,
       options = list(
         stack = input$pb_stack
