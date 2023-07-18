@@ -139,7 +139,7 @@ ui <- dashboardPage(
 )
 
 # change in prod env
-userauth <- T
+userauth <- F
 
 if (userauth) {
 ui <- secure_app(ui,theme = "simplex")
