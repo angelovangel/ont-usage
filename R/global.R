@@ -16,6 +16,7 @@ library(highcharter)
 #library(digest)
 library(scales)
 library(httr2)
+library(shinymanager)
 
 siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
 

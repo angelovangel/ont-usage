@@ -1,4 +1,3 @@
-
 ui <- dashboardPage(
   skin = 'green',
   header = dashboardHeader(title = 'TGS machine usage (BCL)', titleWidth = 350,
@@ -138,3 +137,14 @@ ui <- dashboardPage(
     )
   )
 )
+
+# change in prod env
+userauth <- T
+
+if (userauth) {
+ui <- secure_app(ui,theme = "simplex")
+} else {
+ui
+}
+
+

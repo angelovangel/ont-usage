@@ -1,6 +1,15 @@
 
 server <- function(input, output, session) {
   
+  #==========user auth ==================================# 
+  credentials <- readRDS('data/credentials.rds')
+  
+  res_auth <- secure_server(
+    check_credentials = check_credentials(credentials)
+  )
+  
+  #==========user auth ==================================#
+  
   # data loaded once for each session
   df <- vroom('data/df.csv') %>% 
     mutate(group = factor(group))
@@ -233,10 +242,10 @@ server <- function(input, output, session) {
     highchart() %>%
       hc_add_series(data = ont_output_data(), 
                     type = if_else(input$ont_output_type, 'line', 'column'), 
-                    hcaes_string(
-                      x = 'm', 
-                      y = input$output_units,
-                      group = 'group')
+                    hcaes(
+                      x = m, 
+                      y = .data[[input$output_units]],
+                      group = group)
       ) %>%
       hc_xAxis(type = 'datetime') %>%
       hc_yAxis(title = list(text = input$output_units)) %>%
