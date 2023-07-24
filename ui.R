@@ -126,9 +126,17 @@ ui <- dashboardPage(
                   params = list(
                     division = list(inputId = 'division', title = 'Division'),
                     pi_name = list(inputId = 'pi_name', title = 'PI name')
+                    )
                   )
-                )
-                )
+                ),
+                box(width = 5, 
+                     #valueBoxOutput('output'), 
+                     fluidRow(
+                       valueBoxOutput('pb_runhours', width = 6), 
+                       valueBoxOutput('pb_usage', width = 6)
+                     )
+                     #htmlOutput('selected_dates')
+                 )
                ),
                fluidRow(
                  box(width = 12,

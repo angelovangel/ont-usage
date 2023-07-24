@@ -7,9 +7,9 @@ server <- function(input, output, session) {
   res_auth <- secure_server(
     check_credentials = check_credentials(credentials)
   )
-  
   #==========user auth ==================================#
   
+ #### LOAD DATA ####
   # data loaded once for each session
   df <- vroom('data/df.csv') %>% 
     mutate(group = factor(group))
@@ -29,15 +29,15 @@ server <- function(input, output, session) {
   
   
   
-  #### REACTIVE DATA
+ #### REACTIVE DATA ####
   
-  df_module <- callModule(
+  df_ont_module <- callModule(
     module = selectizeGroupServer,
     id = 'ont-usage-filters', data = df, vars = c('division', 'pi_name')
   )
   
   dfr <- reactive({
-    df_module()[df_module()$start >= input$dates[1] & df_module()$end <= input$dates[2], ]
+    df_ont_module()[df_ont_module()$start >= input$dates[1] & df_ont_module()$end <= input$dates[2], ]
   })
   
   df_pb_module <- callModule(
@@ -58,9 +58,17 @@ server <- function(input, output, session) {
   })
   
   dfpbr_merged <- reactive({
-    dfpbr %>%
+    dfpbr() %>%
       merge_overlaps(start, end, group) %>%
       mutate(group = factor(group))
+  })
+  
+  dfpbr_merged_total <- reactive({
+    dfpbr_merged() %>%
+      reframe(total_rng = iv_groups(rng)) %>% 
+      mutate(start = vctrs::field(total_rng, 1),
+             end = vctrs::field(total_rng, 2),
+             dur = end - start)
   })
   
   df2_module <- callModule(
@@ -103,9 +111,8 @@ server <- function(input, output, session) {
       mutate(cum_reads = cumsum(sum_reads), cum_bases = cumsum(sum_bases), cum_fc = cumsum(fc)) 
   })
   
-  ### OUTPUTS
-  
-  ### ONT USAGE
+ ### OUTPUTS ####
+ #### ONT USAGE ####
   
   output$usage_timevis <- renderTimevis({
     mydata <- dfr() %>% mutate(style = .data[[input$color]])
@@ -152,7 +159,7 @@ server <- function(input, output, session) {
         style = "font-size: 80%; font-weight:normal;"), 
       subtitle = HTML(
         paste0(
-          'selected duration <b>', sprintf('%s days %s hours', day(selected_time), hour(selected_time)), '</b><br>',
+          'selected <b>', sprintf('%s days %s hours', day(selected_time), hour(selected_time)), '</b><br>',
           'prom <b>', sprintf('%s days %s hours', day(prom_time), hour(prom_time)), '</b><br>',
           'grid <b>', sprintf('%s days %s hours', day(grid_time), hour(grid_time)), '</b>'
         )
@@ -209,7 +216,7 @@ server <- function(input, output, session) {
     )
   })
   
-  ### ONT OUTPUT
+ #### ONT OUTPUT ####
   output$ont_flowcells <- renderValueBox({
     cellcounts <- dfr2() %>% group_by(group) %>% 
       summarise(flowcell = length(unique(content)))
@@ -293,7 +300,7 @@ server <- function(input, output, session) {
     )
   })
   
-  ## PB USAGE
+ #### PB USAGE ####
   output$pb_usage_timevis <- renderTimevis({
     mydata <- dfpbr() %>%
       mutate(style = .data[[input$pb_usage_color]]) %>%
@@ -304,10 +311,58 @@ server <- function(input, output, session) {
       mydata, fit = F,
       groups = df_pb_groups,
       options = list(
-        stack = input$pb_stack
+        stack = input$pb_stack,
+        maxHeight = '500px', 
+        #minHeight = '300px', 
+        zoomMin = 604800000, zoomMax = 31556926000
       )
     ) %>%
     setWindow(start = input$pb_dates[1], end = input$pb_dates[2] + days(14))
+  })
+  
+  output$pb_runhours <- renderValueBox({
+    seq2_time <- sum(dfpbr_merged()[dfpbr_merged()$group == 'Sequel2', ]$dur, na.rm = T) %>% as.duration() %>% seconds_to_period()
+    seq2e_time <- sum(dfpbr_merged()[dfpbr_merged()$group == 'Sequel2e', ]$dur, na.rm = T) %>% as.duration() %>% seconds_to_period()
+    revio_time <- sum(dfpbr_merged()[dfpbr_merged()$group == 'Revio', ]$dur, na.rm = T) %>% as.duration() %>% seconds_to_period()
+    total_time <- sum(dfpbr_merged_total()$dur, na.rm = T) %>% as.duration() %>% seconds_to_period()
+    selected_time <- (input$pb_dates[2] - input$pb_dates[1]) %>% as.duration() %>% seconds_to_period()
+    valueBox(
+      value = tags$p(
+        sprintf('%s days %s hours', day(total_time), hour(total_time)), 
+        style = "font-size: 80%; font-weight:normal;"), 
+      subtitle = HTML(
+        paste0(
+          'selected <b>', sprintf('%s days %s hours', day(selected_time), hour(selected_time)), '</b><br>',
+          'Seq2 <b>', sprintf('%s days %s hours', day(seq2_time), hour(seq2_time)), '</b><br>',
+          'Seq2e <b>', sprintf('%s days %s hours', day(seq2e_time), hour(seq2e_time)), '</b><br>',
+          'Revio <b>', sprintf('%s days %s hours', day(revio_time), hour(revio_time)), '</b>'
+        )
+      ),
+      color = 'green'
+    )
+  })
+  
+  output$pb_usage <- renderValueBox({
+    seq2_time <- sum(dfpbr_merged()[dfpbr_merged()$group == 'Sequel2', ]$dur, na.rm = T) %>% as.duration() %>% seconds_to_period()
+    seq2e_time <- sum(dfpbr_merged()[dfpbr_merged()$group == 'Sequel2e', ]$dur, na.rm = T) %>% as.duration() %>% seconds_to_period()
+    revio_time <- sum(dfpbr_merged()[dfpbr_merged()$group == 'Revio', ]$dur, na.rm = T) %>% as.duration() %>% seconds_to_period()
+    total_time <- sum(dfpbr_merged_total()$dur, na.rm = T) %>% as.duration() %>% seconds_to_period()
+    selected_time <- (input$pb_dates[2] - input$pb_dates[1]) %>% as.duration() %>% seconds_to_period()
+    
+    total_usage <- paste0(round(total_time/selected_time*100, 0), ' % usage')
+    seq2_usage <- paste0(round(seq2_time/selected_time*100, 0), ' %')
+    seq2e_usage <- paste0(round(seq2e_time/selected_time*100, 0), ' %')
+    revio_usage <- paste0(round(revio_time/selected_time*100, 0), ' %')
+    runscount <- length(dfpbr()$run_uniqueId %>% unique())
+    
+    valueBox(value = tags$p(total_usage, style = "font-size: 80%; font-weight:normal;"),
+             subtitle = HTML(paste0(
+               '<b>', runscount, '</b> runs', '<br>',
+               'Seq2 <b>' , seq2_usage, '</b><br>',
+               'Seq2e <b>', seq2e_usage,'</b><br>',
+               'Revio <b>', revio_usage
+             )),
+             color = 'green')
   })
   
   output$pb_usage_datatable <- renderDataTable({
@@ -335,8 +390,8 @@ server <- function(input, output, session) {
                 dom = 'Btp')
     )
   })
-  
-  ### OBSERVERS
+  #### PB OUTPUT ####
+  #### OBSERVERS ####
   
   # switch ONT graph output to cumulative
   observeEvent(input$ont_output_type, {
