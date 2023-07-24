@@ -21,13 +21,13 @@ library(shinymanager)
 
 siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
 
-pb_columns <- c(
-  'run_uniqueId', 'run_instrumentType', 'run_instrumentName', 'run_status', 
-  'cell_name', 'cell_well', 'cell_uniqueId', 'cell_status', 'cell_startedAt', 'cell_completedAt', 'cell_runId', 
-  'run_context','run_startedAt', 'run_completedAt', 'run_name', 'run_status', 'run_numCellsCompleted', 'run_numCellsFailed',
-  'Application', 'Unique Molecular Yield', 'Polymerase Read N50', 'Polymerase Read Length (mean)', 
-  'Polymerase Reads', 'Subread N50','Subread Length (mean)'
-)
+# pb_columns <- c(
+#   'run_uniqueId', 'run_instrumentType', 'run_instrumentName', 'run_status', 
+#   'cell_name', 'cell_well', 'cell_uniqueId', 'cell_status', 'cell_startedAt', 'cell_completedAt', 'cell_runId', 
+#   'run_context','run_startedAt', 'run_completedAt', 'run_name', 'run_status', 'run_numCellsCompleted', 'run_numCellsFailed',
+#   'Application', 'Unique Molecular Yield', 'Polymerase Read N50', 'Polymerase Read Length (mean)', 
+#   'Polymerase Reads', 'Subread N50','Subread Length (mean)'
+# )
 
 # heatmap for some values
 # pass x as argument, return hex

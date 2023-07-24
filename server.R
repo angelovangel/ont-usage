@@ -19,12 +19,12 @@ server <- function(input, output, session) {
     content = c('GridION', 'PromethION')
   )
   
-  df_pb <- vroom('data/df_pb.csv') %>%
-    mutate(group = factor(run_instrumentType))
+  df_pb <- vroom('data/pb_dump_processed.csv') %>%
+    mutate(group = factor(instrumentType))
   
   df_pb_groups <- data.frame(
-    id = c('Sequel', 'Sequel2', 'Sequel2e'), 
-    content = c('Sequel', 'Sequel2', 'Sequel2e')
+    id = c('Sequel', 'Sequel2', 'Sequel2e', 'Revio'), 
+    content = c('Sequel', 'Sequel2', 'Sequel2e', 'Revio')
   ) 
   
   
@@ -45,15 +45,22 @@ server <- function(input, output, session) {
     id = 'pb-usage-filters', data = df_pb, vars = c('division', 'pi_name')
   )
   
-  df_pb_r <- reactive({
+  dfpbr <- reactive({
     d <- df_pb_module()[df_pb_module()$run_startedAt >= input$pb_dates[1] & df_pb_module()$run_completedAt <= input$pb_dates[2], ]
     d %>%
       mutate(
-        start = cell_startedAt,
-        end = cell_completedAt, 
-        content = cell_name
+        start = run_startedAt,
+        end = run_completedAt, 
+        content = run_name, 
+        title = paste0(totalCells, ' cells<br>', division)
       ) %>%
       filter(!is.na(start) & !is.na(end))
+  })
+  
+  dfpbr_merged <- reactive({
+    dfpbr %>%
+      merge_overlaps(start, end, group) %>%
+      mutate(group = factor(group))
   })
   
   df2_module <- callModule(
@@ -288,8 +295,10 @@ server <- function(input, output, session) {
   
   ## PB USAGE
   output$pb_usage_timevis <- renderTimevis({
-    mydata <- df_pb_r() %>%
-      mutate(style = .data[[input$pb_usage_color]])
+    mydata <- dfpbr() %>%
+      mutate(style = .data[[input$pb_usage_color]]) %>%
+      dplyr::select(start, end, group, content, title, style) %>%
+      unique()
 
     timevis(
       mydata, fit = F,
@@ -303,12 +312,12 @@ server <- function(input, output, session) {
   
   output$pb_usage_datatable <- renderDataTable({
     mydata <- 
-      df_pb_r() %>%
+      dfpbr() %>%
       #dplyr::filter(sample_id %in% input$sampleids) %>%
       mutate(start_date = as.Date(start)) %>%
       arrange(start_date) %>%
-      dplyr::select(c('start_date', 'group', 'run_name', 'run_context', 'cell_name','cell_status', 'division', 'pi_name', 
-                      'Unique Molecular Yield')
+      dplyr::select(c('start_date', 'group', 'run_name', 'run_context', 'numCellsCompleted','run_status', 'division', 'pi_name', 
+                      'ccs2.number_of_ccs_reads')
                     )
     datatable(mydata, 
               caption = paste0('PacBio usage raw data from ',input$pb_dates[1], ' to ', input$pb_dates[2], '.' ),

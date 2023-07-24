@@ -3,7 +3,9 @@ ui <- dashboardPage(
   header = dashboardHeader(title = 'TGS machine usage (BCL)', titleWidth = 350,
                            dropdownMenu(type = 'notifications', 
                                         notificationItem(
-                                          text = paste0('ONT data update: ', file.mtime('data/df.csv')))
+                                          text = paste0('ONT data update: ', file.mtime('data/df.csv'))),
+                                        notificationItem(
+                                          text = paste0('PB data update: ', file.mtime('data/pb_dump_processed.csv')))
                            )
   ),
   sidebar = dashboardSidebar(disable = T), 
@@ -18,7 +20,8 @@ ui <- dashboardPage(
                                     min = Sys.Date() - years(5), 
                                     max = Sys.Date() + years(1),
                                     separator = '--', 
-                                    start = Sys.Date() - months(6)),
+                                    start = Sys.Date() - months(6), 
+                                    end = Sys.Date() + days(1)),
                      
                      checkboxInput('stack', 'Expand items', value = FALSE),
                      radioButtons('color', 'Color flowcells by', inline = T,
@@ -106,7 +109,10 @@ ui <- dashboardPage(
                                  min = Sys.Date() - years(10), 
                                  max = Sys.Date() + years(1),
                                  separator = '--', 
-                                 start = Sys.Date() - months(3)),
+                                 #start = lubridate::floor_date(Sys.Date(), 'year')), # give start of current year
+                                 start = Sys.Date() - months(6), 
+                                 end = Sys.Date() + days(1)
+                                 ),
                   radioButtons('pb_usage_color', 
                                'Color cells by', inline = T,
                                choiceNames = c('Division', 'PI'),
