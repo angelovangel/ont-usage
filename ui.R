@@ -147,8 +147,64 @@ ui <- dashboardPage(
                      )
                )
               ),
-      tabPanel('PacBio output')
-    )
+      tabPanel('PacBio output',
+               fluidRow(
+                 box(
+                   width = 3,
+                   dateRangeInput(
+                     'pb_dates2',
+                     'Select interval for PacBio output calculation',
+                     min = Sys.Date() - years(5),
+                     max = Sys.Date() + years(1),
+                     separator = '--',
+                     start = Sys.Date() - months(12)
+                   ),
+                   selectizeGroupUI(
+                     id = 'pb-output-filters',
+                     #label = 'Filter data by Division and PI',
+                     params = list(
+                       division = list(inputId = 'division', title = 'Division'),
+                       pi_name = list(inputId = 'pi_name', title = 'PI name')
+                     )
+                   ),
+                   selectizeInput(
+                     'pb_time_units',
+                     'Select time unit to aggregate data',
+                     choices = c('week', 'month', 'year'),
+                     selected = 'month'
+                   ),
+                   selectizeInput(
+                     'pb_output_units',
+                     'Select output unit',
+                     choices = list(
+                       'Flowcells' = 'fc',
+                       'Bases' = 'sum_ccs_bases',
+                       'Reads' = 'sum_ccs_reads'
+                     ),
+                     selected = 'fc'
+                   ),
+                   selectizeInput(
+                     'pb_output_groupby',
+                     'Group data by',
+                     choices = c('Instrument' = 'instrumentType', 'Division' = 'division'),
+                     selected = 'instrumentType'
+                   ),
+                   checkboxInput('pb_output_type', 'Cumulative output', value = FALSE)
+                 ),
+                 box(
+                   width = 3,
+                   valueBoxOutput('pb_flowcells', width = 12),
+                   valueBoxOutput('pb_output', width = 12)
+                 ),
+                 box(width = 6,
+                     highchartOutput('pb_output_graph'))
+               ),
+               fluidRow(box(
+                 width = 12,
+                 dataTableOutput('pb_output_table')
+               )))
+      )
+    
   )
 )
 
