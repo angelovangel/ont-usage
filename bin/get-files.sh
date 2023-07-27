@@ -50,7 +50,11 @@ newfiles=$(grep -vFf data/seqsum-fromcounts.files data/seqsum.files | wc -l)
 echo "found $newfiles new sequencing summary files"
 grep -vFf data/seqsum-fromcounts.files data/seqsum.files | parallel bin/count-seq-summary.sh 0.5 >> data/counts.csv
 
- 
+# dump PacBio data
+echo "$(date +'%Y-%m-%d %H:%M:%S') === running pb-dump.R..."
+[ ! -z $SMRT_BASE ] && bin/pb-dump.R $SMRT_BASE $SMRT_USER $SMRT_PASS  || echo 'SMRT env variables not set, skipping PacBio dump'
+
+
 # process data to make a csv for app and sharing
 
 echo "$(date +'%Y-%m-%d %H:%M:%S') === counts done, running process-files.R ..."

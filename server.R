@@ -96,12 +96,13 @@ server <- function(input, output, session) {
   )
   
   dfpbr <- reactive({
-    d <- df_pb_module()[df_pb_module()$run_startedAt >= input$pb_dates[1] & df_pb_module()$run_completedAt <= input$pb_dates[2], ]
+    d <- df_pb_module()[df_pb_module()$run_startedAt >= input$pb_dates[1] & df_pb_module()$run_completedAt <= input$pb_dates[2] | is.na(df_pb_module()$run_completedAt), ]
     d %>%
+      dplyr::filter(run_status == 'Running' | run_status == 'Complete') %>%
       mutate(
         start = run_startedAt,
-        end = run_completedAt, 
-        content = run_name, 
+        end = if_else(run_status == 'Running', Sys.time(), run_completedAt), 
+        content = if_else(run_status == 'Running', 'Running', run_name),
         id = run_uniqueId,
         title = paste0(run_name, '<br>', totalCells, ' cells<br>', division)
       ) %>%
@@ -408,8 +409,7 @@ server <- function(input, output, session) {
       #dplyr::filter(sample_id %in% input$sampleids) %>%
       mutate(start_date = as.Date(start)) %>%
       arrange(desc(start_date)) %>%
-      dplyr::select(c('start_date', 'group', 'run_name', 'coll_name','run_status', 'division', 'pi_name', 
-                      'ccs2.number_of_ccs_reads', 'ccs2.total_number_of_ccs_bases')
+      dplyr::select(c('start_date', 'group', 'run_name', 'coll_name','run_status', 'numCellsCompleted', 'division', 'pi_name')
                     )
     datatable(mydata, 
               caption = paste0('PacBio usage raw data from ',input$pb_dates[1], ' to ', input$pb_dates[2], '.' ),
