@@ -52,6 +52,7 @@ grep -vFf data/seqsum-fromcounts.files data/seqsum.files | parallel bin/count-se
 
 # dump PacBio data
 echo "$(date +'%Y-%m-%d %H:%M:%S') === running pb-dump.R..."
+source .Renviron
 [ ! -z $SMRT_BASE ] && bin/pb-dump.R $SMRT_BASE $SMRT_USER $SMRT_PASS  || echo 'SMRT env variables not set, skipping PacBio dump'
 
 

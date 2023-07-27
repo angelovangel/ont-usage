@@ -5,7 +5,7 @@ ui <- dashboardPage(
                                         notificationItem(
                                           text = paste0('ONT data update: ', file.mtime('data/df.csv'))),
                                         notificationItem(
-                                          text = paste0('PB data update: ', file.mtime('data/pb_dump_processed.csv')))
+                                          text = paste0('PB data update: ', file.mtime('data/pb_dump.csv')))
                            )
   ),
   sidebar = dashboardSidebar(disable = T), 
