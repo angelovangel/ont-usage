@@ -45,7 +45,7 @@ my_temp_color <- function(x, xfrom, xto) {
 
 # a function, takes a number and returns hex
 # used to assign colors to levels of factor
-my_levels_color <- brewer_pal(type = 'div', palette = 'Spectral')
+my_levels_color <- brewer_pal(type = 'div', palette = 'Paired')
 
 # merge overlapping intervals, by group
 merge_overlaps <- function(dataframe, start_time, end_time, grouping) {

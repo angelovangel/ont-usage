@@ -115,8 +115,8 @@ ui <- dashboardPage(
                                  ),
                   radioButtons('pb_usage_color', 
                                'Color cells by', inline = T,
-                               choiceNames = c('Division', 'PI'),
-                               choiceValues = c('style_division', 'style_pi'), 
+                               choiceNames = c('Division', 'Number of cells'),
+                               choiceValues = c('style_division', 'style_num_cells'), 
                                selected = 'style_division'),
                                
                   checkboxInput('pb_stack', 'Expand items', value = FALSE)

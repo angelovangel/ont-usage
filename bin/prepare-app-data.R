@@ -45,7 +45,8 @@ divisions <- setNames(
 df_pb <- 
   df_pb %>% 
   left_join(divisions, by = c('division' = 'values')) %>% 
-  mutate(style_division = paste0('background-color: ', ind, ';'))
+  mutate(style_division = paste0('background-color: ', ind, ';'), 
+         style_num_cells = paste0('background-color: ', my_temp_color(totalCells, 0, 8), ';'))
   
 # fix 1 wrong run enddate
 df_pb[df_pb$run_uniqueId == '12d845e8-54f1-40d0-9580-f4a173023ae3',]$run_completedAt <- as_datetime("2019-05-06 08:36:59 UTC")
