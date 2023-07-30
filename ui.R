@@ -202,7 +202,12 @@ ui <- dashboardPage(
                fluidRow(box(
                  width = 12,
                  dataTableOutput('pb_output_table')
-               )))
+               ))),
+      tabPanel('PacBio status',
+               box(width =12,
+                 #column(width = 3, tags$p('machine1')),
+                 uiOutput('pb_status')
+               ))
       )
     
   )

@@ -147,6 +147,20 @@ server <- function(input, output, session) {
       mutate(cum_ccs_reads = cumsum(sum_ccs_reads), cum_ccs_bases = cumsum(sum_ccs_bases), cum_fc = cumsum(fc)) 
   })
   
+  smrt_token <- reactive({
+    # valid for 20 minutes
+    invalidateLater(1200000)
+    smrtlinker::smrt_token(
+      baseurl = Sys.getenv("SMRT_BASE"), user = Sys.getenv("SMRT_USER"), pass = Sys.getenv("SMRT_PASS")
+      ) %>% .$access_token
+  })
+  
+  pb_status <- reactive({
+    invalidateLater(30000, session)
+    smrtlinker::smrt_state(baseurl = Sys.getenv("SMRT_BASE"), token = smrt_token())
+  })
+  
+  
   
  ### OUTPUTS ####
  #### ONT USAGE ####
@@ -518,6 +532,46 @@ server <- function(input, output, session) {
                 pageLength = 500,
                 dom = 'Btp' #https://datatables.net/reference/option/dom
               )
+    )
+  })
+  
+ #### PB STATUS ####
+  
+  output$pb_status <- renderUI({
+    #print(pb_status())
+    mydata <- pb_status() %>%
+      mutate(numcells = if_else(numcells == 0, 1, numcells)) %>%
+      mutate(total_time = as.numeric(as.duration(projectedEnd - startedAt)), 
+             elapsed_time = (1-secondsRemaining/total_time)*100 ) %>%
+      mutate(elapsed_time = if_else(is.na(elapsed_time), 0, elapsed_time))
+    
+    tagList(
+      lapply(1:nrow(mydata), function(x) {
+        fluidRow(
+          column(width = 2, 
+                 tags$p(style='text-align:center; font-weight:bold; color:green;', 
+                        paste0(mydata[x, ]$instrumentName, ' | ', mydata[x, ]$status)
+                        )
+                 ),
+          column(width = mydata[x, ]$numcells, 
+                 progressBar(id = paste0(mydata[x, ]$serial), 
+                             title = mydata[x,]$projectedEnd,
+                             status = 'success', striped = T, value = mydata[x,]$elapsed_time))
+        )
+      }
+             )
+      # fluidRow(
+      #   column(width = 1, tags$p(style='text-align:right; font-weight:bold; color:green;','Sequel2')),
+      #   column(width = 8, progressBar('id1', status = 'success', striped = T, value = 23))
+      # ),
+      # fluidRow(
+      #   column(width = 1, tags$p(style='text-align:right; font-weight:bold; color:green;','Sequel2e')),
+      #   column(width = 1, progressBar('id2', value = 40))
+      # ),
+      # fluidRow(
+      #   column(width = 1, tags$p(style='text-align:right; font-weight:bold; color:green;','Revio')),
+      #   column(width = 6, progressBar('id3', value = 40))
+      # )
     )
   })
   
