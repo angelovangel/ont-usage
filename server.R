@@ -27,7 +27,8 @@ server <- function(input, output, session) {
   
   df_pb_groups <- data.frame(
     id = c('Sequel', 'Sequel2', 'Sequel2e', 'Revio'), 
-    content = c('Sequel', 'Sequel2', 'Sequel2e', 'Revio')
+    content = c('Sequel', 'Sequel2', 'Sequel2e', 'Revio'),
+    serial = c(NA, '64068', '64468e', '84115')
   ) 
   
   
@@ -540,10 +541,11 @@ server <- function(input, output, session) {
   output$pb_status <- renderUI({
     #print(pb_status())
     mydata <- pb_status() %>%
+      left_join(df_pb_groups) %>% mutate(instrumentName = content) %>%
       mutate(numcells = if_else(numcells == 0, 1, numcells)) %>%
       mutate(total_time = as.numeric(as.duration(projectedEnd - startedAt)), 
-             elapsed_time = (1-secondsRemaining/total_time)*100 ) %>%
-      mutate(elapsed_time = if_else(is.na(elapsed_time), 0, elapsed_time))
+             elapsed_frac = (1-secondsRemaining/total_time)*100 ) %>%
+      mutate(elapsed_frac = if_else(is.na(elapsed_frac), 0, elapsed_frac))
     
     tagList(
       lapply(1:nrow(mydata), function(x) {
@@ -555,23 +557,21 @@ server <- function(input, output, session) {
                  ),
           column(width = mydata[x, ]$numcells, 
                  progressBar(id = paste0(mydata[x, ]$serial), 
-                             title = mydata[x,]$projectedEnd,
-                             status = 'success', striped = T, value = mydata[x,]$elapsed_time))
-        )
-      }
-             )
-      # fluidRow(
-      #   column(width = 1, tags$p(style='text-align:right; font-weight:bold; color:green;','Sequel2')),
-      #   column(width = 8, progressBar('id1', status = 'success', striped = T, value = 23))
-      # ),
-      # fluidRow(
-      #   column(width = 1, tags$p(style='text-align:right; font-weight:bold; color:green;','Sequel2e')),
-      #   column(width = 1, progressBar('id2', value = 40))
-      # ),
-      # fluidRow(
-      #   column(width = 1, tags$p(style='text-align:right; font-weight:bold; color:green;','Revio')),
-      #   column(width = 6, progressBar('id3', value = 40))
-      # )
+                             display_pct = T,
+                             title = if_else(
+                               mydata[x,]$status == 'Running',
+                               paste0(
+                               'Start: ', format(mydata[x,]$startedAt, '%Y-%m-%d %H:%M'),
+                               ' | End: ', format(mydata[x,]$projectedEnd, '%Y-%m-%d %H:%M')
+                               #' Elapsed: ', as.duration(mydata[x,]$secondsRemaining)
+                               ),
+                               mydata[x,]$status
+                               ),
+                             status = 'success', striped = T,
+                             value = mydata[x,]$elapsed_frac))
+          )
+        }
+      )
     )
   })
   
