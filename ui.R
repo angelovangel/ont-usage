@@ -186,7 +186,7 @@ ui <- dashboardPage(
                    selectizeInput(
                      'pb_output_groupby',
                      'Group data by',
-                     choices = c('Instrument' = 'instrumentType', 'Division' = 'division'),
+                     choices = c('Instrument' = 'instrumentType', 'Division' = 'division', 'PI' = 'pi_name'),
                      selected = 'instrumentType'
                    ),
                    checkboxInput('pb_output_type', 'Cumulative output', value = FALSE)

@@ -551,7 +551,7 @@ server <- function(input, output, session) {
       lapply(1:nrow(mydata), function(x) {
         fluidRow(
           column(width = 2, 
-                 tags$p(style='text-align:center; font-weight:bold; color:green;', 
+                 tags$div(style='text-align:center; vertical-align: middle; font-weight:bold; color:green; font-size: 1.2em;', 
                         paste0(mydata[x, ]$instrumentName, ' | ', mydata[x, ]$status)
                         )
                  ),
@@ -561,8 +561,10 @@ server <- function(input, output, session) {
                              title = if_else(
                                mydata[x,]$status == 'Running',
                                paste0(
-                               'Start: ', format(mydata[x,]$startedAt, '%Y-%m-%d %H:%M'),
-                               ' | End: ', format(mydata[x,]$projectedEnd, '%Y-%m-%d %H:%M')
+                                 mydata[x, ]$numcells, ' cells | ',
+                                 'Start: ', format(mydata[x,]$startedAt, '%Y-%m-%d %H:%M'),
+                                 ' | End: ', format(mydata[x,]$projectedEnd, '%Y-%m-%d %H:%M'), 
+                                 ' | Status: ', mydata[x, ]$cells_status
                                #' Elapsed: ', as.duration(mydata[x,]$secondsRemaining)
                                ),
                                mydata[x,]$status
@@ -571,8 +573,12 @@ server <- function(input, output, session) {
                              value = mydata[x,]$elapsed_frac))
           )
         }
+      ),
+      tags$p(style='text-align:right; color:grey;', 
+             paste0('Last update: ', format(mydata[nrow(mydata), ]$timestamp, '%Y-%m-%d %H:%M:%S'))
       )
     )
+    
   })
   
  #### OBSERVERS ####
