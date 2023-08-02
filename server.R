@@ -564,7 +564,7 @@ server <- function(input, output, session) {
                                  mydata[x, ]$numcells, ' cells | ',
                                  'Start: ', format(mydata[x,]$startedAt, '%Y-%m-%d %H:%M'),
                                  ' | End: ', format(mydata[x,]$projectedEnd, '%Y-%m-%d %H:%M'), 
-                                 ' | Status: ', mydata[x, ]$cells_status
+                                 ' | ', mydata[x, ]$cells_status
                                #' Elapsed: ', as.duration(mydata[x,]$secondsRemaining)
                                ),
                                mydata[x,]$status
