@@ -157,6 +157,11 @@ server <- function(input, output, session) {
   })
   
   pb_status <- reactive({
+    validate(
+      need(
+        !is.null(curl::nslookup('smrt.ibex.kaust.edu.sa', error = F)), 'No connection to SMRTLink'
+      )
+    )
     invalidateLater(30000, session)
     smrtlinker::smrt_state(baseurl = Sys.getenv("SMRT_BASE"), token = smrt_token())
   })
