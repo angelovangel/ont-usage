@@ -560,7 +560,8 @@ server <- function(input, output, session) {
                         paste0(mydata[x, ]$instrumentName, ' | ', mydata[x, ]$status)
                         )
                  ),
-          column(width = mydata[x, ]$numcells, 
+          column(#width = mydata[x, ]$numcells, 
+                 width= 8,
                  progressBar(id = paste0(mydata[x, ]$serial), 
                              display_pct = T,
                              title = if_else(
