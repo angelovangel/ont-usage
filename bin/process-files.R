@@ -31,6 +31,9 @@ opt <- arguments$options
 mypath <- arguments$args
 
 myfiles <- list.files(mypath, pattern = 'final_summary*', recursive = T, full.names = T)
+# exclude some test/tmp directories with empty files
+myfiles <- myfiles[file.size(myfiles) != 0]
+
 mydirs <- dirname(myfiles)
 myrundirs <- basename(mydirs) 
 
