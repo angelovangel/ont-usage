@@ -12,7 +12,8 @@ server <- function(input, output, session) {
  #### LOAD DATA ####
   # data loaded once for each session
   df <- vroom('data/df.csv') %>% 
-    mutate(group = factor(group), division = factor(division))
+    mutate(group = factor(group), division = factor(division)) %>% 
+    arrange(desc(start))
   
   groups_df <- data.frame(
     id = c('grid', 'prom'),
@@ -28,7 +29,7 @@ server <- function(input, output, session) {
   df_pb_groups <- data.frame(
     id = c('Sequel', 'Sequel2', 'Sequel2e', 'Revio'), 
     content = c('Sequel', 'Sequel2', 'Sequel2e', 'Revio'),
-    serial = c(NA, '64068', '64468e', '84115')
+    serial = c(NA, '64068', '64468e', '84180')
   ) 
   
   
