@@ -353,19 +353,25 @@ server <- function(input, output, session) {
     )
     reuse <- dfr2() %>%
       dplyr::filter(!is.na(content)) %>%
-      count(content, name = 'runs') %>%
-      count(runs, name = 'flowcells') %>%
+      count(group, content, name = 'runs') %>%
+      count(group, runs, name = 'flowcells') %>%
+      complete(group, runs, fill = list(flowcells = 0)) %>%
+      arrange(runs) %>%
       mutate(runs = paste0(runs, 'x'))
-    reused <- sum(reuse$flowcells[reuse$runs != '1x'])
+    reused <- reuse %>%
+      group_by(group) %>%
+      summarise(txt = paste0(group[1], ' ', sum(flowcells[runs != '1x']), '/', sum(flowcells)))
 
     highchart() %>%
-      hc_add_series(data = reuse, type = 'column', name = 'Flowcells',
-                    hcaes(x = runs, y = flowcells), showInLegend = FALSE) %>%
+      hc_add_series(data = reuse, type = 'column',
+                    hcaes(x = runs, y = flowcells, group = group)) %>%
       hc_xAxis(type = 'category', title = list(text = 'Runs per flowcell')) %>%
       hc_yAxis(title = list(text = 'Flowcells')) %>%
       hc_add_theme(hc_theme_google()) %>%
       hc_title(text = 'Flowcell re-use', style = list(fontSize = '14px')) %>%
-      hc_subtitle(text = paste0(reused, ' of ', sum(reuse$flowcells), ' flowcells re-used'))
+      hc_subtitle(text = paste0('re-used: ', str_flatten(reused$txt, collapse = ', '))) %>%
+      # click on legend items to show/hide platforms
+      hc_legend(enabled = TRUE, align = 'right', verticalAlign = 'top', layout = 'vertical', floating = TRUE)
   })
 
   output$output_table <- renderDataTable({
