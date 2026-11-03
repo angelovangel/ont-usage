@@ -70,12 +70,21 @@ server <- function(input, output, session) {
   })
   
   ont_output_data <- reactive({
-    dfr2() %>% 
+    d <- dfr2() %>%
       mutate( group = .data[[input$ont_output_groupby]] ) %>%
-      dplyr::filter(!is.na(group)) %>%
+      dplyr::filter(!is.na(group))
+    validate(
+      need(nrow(d) >= 1, 'No data!')
+    )
+    d %>%
       mutate(m = lubridate::floor_date(start, unit = input$time_units)) %>%
-      mutate(m = as.Date(m), c = 1) %>%   # used to count flow cells 
-      complete(m = seq.Date(from = min(m, na.rm = T), to = max(m, na.rm = T), 
+      mutate(m = as.Date(m)) %>%
+      # used to count flow cells - count each flow cell (content) only once, at its first use
+      arrange(start) %>%
+      group_by(group) %>%
+      mutate(c = as.numeric(!duplicated(content))) %>%
+      ungroup() %>%
+      complete(m = seq.Date(from = min(m, na.rm = T), to = max(m, na.rm = T),
                             by = input$time_units), group, fill = list(c = 0)
       ) %>%
       group_by(m, group) %>%
@@ -130,11 +139,15 @@ server <- function(input, output, session) {
   })
   
   pb_output_data <- reactive({
-    dfpbr2() %>% 
+    d <- dfpbr2() %>%
       #ungroup() %>%
       dplyr::filter(coll_status == 'Complete') %>%
       mutate( group = .data[[input$pb_output_groupby]] ) %>%
-      dplyr::filter(!is.na(group)) %>%
+      dplyr::filter(!is.na(group))
+    validate(
+      need(nrow(d) >= 1, 'No data!')
+    )
+    d %>%
       mutate(m = lubridate::floor_date(run_startedAt, unit = input$pb_time_units)) %>%
       mutate(m = as.Date(m), c = 1) %>%   # used to count flow cells 
       complete(m = seq.Date(from = min(m, na.rm = T), to = max(m, na.rm = T), 
@@ -278,7 +291,7 @@ server <- function(input, output, session) {
   output$ont_flowcells <- renderValueBox({
     cellcounts <- dfr2() %>% group_by(group) %>% 
       summarise(flowcell = length(unique(content)))
-    myvalue <- paste0(sum(cellcounts$flowcell, na.rm = T), ' flowcells')
+    myvalue <- paste0(n_distinct(dfr2()$content), ' flowcells')
     valueBox(
       color = 'green',
       value = tags$p(myvalue, style = "font-size: 80%; font-weight:normal;"),
@@ -326,12 +339,35 @@ server <- function(input, output, session) {
       hc_subtitle(text = paste0('Data from ', input$dates2[1], ' to ', input$dates2[2])) %>%
       hc_caption(text = paste0(
         'For selected time range: ',
-        sum(ont_output_data()$fc, na.rm = T), ' runs, ',
+        nrow(dfr2()), ' runs, ',
+        sum(ont_output_data()$fc, na.rm = T), ' flowcells, ',
         siformat(sum(ont_output_data()$sum_reads, na.rm = T)), ' reads, ',
         siformat(sum(ont_output_data()$sum_bases, na.rm = T)), ' bases. Only pass reads/bases are considered.')
       )
   })
   
+  # how many flow cells were used once, twice, ...
+  output$ont_reuse_graph <- renderHighchart({
+    validate(
+      need(nrow(dfr2()) >= 1, 'No data!')
+    )
+    reuse <- dfr2() %>%
+      dplyr::filter(!is.na(content)) %>%
+      count(content, name = 'runs') %>%
+      count(runs, name = 'flowcells') %>%
+      mutate(runs = paste0(runs, 'x'))
+    reused <- sum(reuse$flowcells[reuse$runs != '1x'])
+
+    highchart() %>%
+      hc_add_series(data = reuse, type = 'column', name = 'Flowcells',
+                    hcaes(x = runs, y = flowcells), showInLegend = FALSE) %>%
+      hc_xAxis(type = 'category', title = list(text = 'Runs per flowcell')) %>%
+      hc_yAxis(title = list(text = 'Flowcells')) %>%
+      hc_add_theme(hc_theme_google()) %>%
+      hc_title(text = 'Flowcell re-use', style = list(fontSize = '14px')) %>%
+      hc_subtitle(text = paste0(reused, ' of ', sum(reuse$flowcells), ' flowcells re-used'))
+  })
+
   output$output_table <- renderDataTable({
     validate(
       need(nrow(dfr2()) >= 1, 'No data!')

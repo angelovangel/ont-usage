@@ -90,7 +90,8 @@ ui <- dashboardPage(
                  
                  box(width = 3, 
                      valueBoxOutput('ont_flowcells', width = 12),
-                     valueBoxOutput('ont_output', width = 12)),
+                     valueBoxOutput('ont_output', width = 12),
+                     highchartOutput('ont_reuse_graph', height = '220px')),
                  box(
                    width = 6,
                    highchartOutput('output_graph')
