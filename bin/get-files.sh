@@ -7,7 +7,19 @@
 
 echo "$(date +'%Y-%m-%d %H:%M:%S') === starting get-files.sh, running rsync ..."
 
+# top-level test/tmp dirs to skip (must come before the includes)
+EXCLUDE_DIRS=(
+--exclude='/scratch/'
+--exclude='/temp-yingzi/'
+--exclude='/Test_run/'
+--exclude='/testdir/'
+--exclude='/TestRUN_3062026/'
+--exclude='/tgspipe_testcases/'
+--exclude='/tmp/'
+)
+
 rsync -avm --progress \
+"${EXCLUDE_DIRS[@]}" \
 --include='*/' \
 --include='*final_summary*' \
 --include='*sequencing_summary*' \
@@ -16,6 +28,7 @@ nanopore@mover.ibex.kaust.edu.sa:/biocorelab/Genomics/RawData/PromethION/ data/p
 
 # separately for encrypted
 rsync -avm --progress \
+"${EXCLUDE_DIRS[@]}" \
 --include='*/' \
 --include='*final_summary*' \
 --include='*sequencing_summary*' \
@@ -24,6 +37,7 @@ nanopore@mover.ibex.kaust.edu.sa:/encrypted0/biocorelab/Genomics/RawData/Prometh
 
 
 rsync -avm --progress \
+"${EXCLUDE_DIRS[@]}" \
 --include='*/' \
 --include='*final_summary*' \
 --include='*sequencing_summary*' \
@@ -32,6 +46,7 @@ nanopore@mover.ibex.kaust.edu.sa:/biocorelab/Genomics/RawData/GridION/ data/grid
 
 # separately for encrypted
 rsync -avm --progress \
+"${EXCLUDE_DIRS[@]}" \
 --include='*/' \
 --include='*final_summary*' \
 --include='*sequencing_summary*' \
