@@ -225,16 +225,11 @@ server <- function(input, output, session) {
     total_time <- sum(dfr_merged_total()$dur, na.rm = T) %>% as.duration() %>% seconds_to_period()
     selected_time <- (input$dates[2] - input$dates[1]) %>% as.duration() %>% seconds_to_period()
     valueBox(
-      value = tags$p(
-        sprintf('%s days %s hours', day(total_time), hour(total_time)), 
-        style = "font-size: 80%; font-weight:normal;"), 
-      subtitle = HTML(
-        paste0(
-          'selected <b>', sprintf('%s days %s hours', day(selected_time), hour(selected_time)), '</b><br>',
-          'prom <b>', sprintf('%s days %s hours', day(prom_time), hour(prom_time)), '</b><br>',
-          'grid <b>', sprintf('%s days %s hours', day(grid_time), hour(grid_time)), '</b>'
-        )
-      ),
+      value = vb_value(sprintf('%s days %s hours', day(total_time), hour(total_time))),
+      subtitle = vb_table(tibble(
+        group = c('prom', 'grid', 'total', 'selected'),
+        Time = fmt_dh(c(prom_time, grid_time, total_time, selected_time))
+      )),
       color = 'green'
     )
     
@@ -245,18 +240,15 @@ server <- function(input, output, session) {
     prom_time <- sum(dfr_merged()[dfr_merged()$group == 'prom', ]$dur, na.rm = T) %>% as.duration()
     total_time <- sum(dfr_merged_total()$dur, na.rm = T) %>% as.duration()
     selected_time <- (input$dates[2] - input$dates[1]) %>% as.duration()
-    runscount <-  length(unique(dfr()$flowcell_id.x))
-    
-    
+    runs <- function(g) {n_distinct(dfr()$flowcell_id.x[dfr()$group %in% g])}
+
     total_usage <- paste0(round(total_time/selected_time*100, 0), ' % usage')
-    grid_usage <- paste0(round(grid_time/selected_time*100, 0), ' %')
-    prom_usage <- paste0(round(prom_time/selected_time*100, 0), ' %')
-    
-    valueBox(value = tags$p(total_usage, style = "font-size: 80%; font-weight:normal;"),
-             subtitle = HTML(paste0(
-               '<b>', runscount, '</b> runs', '<br>',
-               'prom <b>' , prom_usage, 
-               '</b><br> grid <b>', grid_usage
+
+    valueBox(value = vb_value(total_usage),
+             subtitle = vb_table(tibble(
+               group = c('prom', 'grid', 'total'),
+               Usage = paste0(round(c(prom_time, grid_time, total_time)/selected_time*100, 0), ' %'),
+               Runs = c(runs('prom'), runs('grid'), n_distinct(dfr()$flowcell_id.x))
              )),
              color = 'green')
     
@@ -289,32 +281,40 @@ server <- function(input, output, session) {
   
  #### ONT OUTPUT ####
   output$ont_flowcells <- renderValueBox({
-    cellcounts <- dfr2() %>% group_by(group) %>% 
-      summarise(flowcell = length(unique(content)))
+    # flowcells are unique (re-used ones counted once), runs are all runs
+    cellcounts <- tibble(group = c('prom', 'grid')) %>%
+      left_join(
+        dfr2() %>% group_by(group) %>% summarise(Flowcells = n_distinct(content), Runs = n()),
+        by = 'group'
+      ) %>%
+      mutate(across(-group, ~ coalesce(.x, 0L))) %>%
+      bind_rows(tibble(group = 'total', Flowcells = n_distinct(dfr2()$content), Runs = nrow(dfr2())))
     myvalue <- paste0(n_distinct(dfr2()$content), ' flowcells')
     valueBox(
       color = 'green',
-      value = tags$p(myvalue, style = "font-size: 80%; font-weight:normal;"),
-      subtitle = HTML(paste0(
-        'prom <b>', cellcounts$flowcell[cellcounts$group == 'prom'], '</b> <br>',
-        'grid <b>', cellcounts$flowcell[cellcounts$group == 'grid']
-      ))
+      value = vb_value(myvalue),
+      subtitle = vb_table(cellcounts)
     )
   })
   
   output$ont_output <- renderValueBox({
-    promoutput <- sum(dfr2()[dfr2()$group == 'prom', ]$bases_pass, na.rm = T)
-    gridoutput <- sum(dfr2()[dfr2()$group == 'grid', ]$bases_pass, na.rm = T)
-    totaloutput <- sum(dfr2()$bases_pass, na.rm = T)
+    # pass bases/reads per platform, last is total
+    groups <- list('prom', 'grid', unique(dfr2()$group))
+    output_sum <- function(col) {
+      sapply(groups, function(g) {sum(dfr2()[[col]][dfr2()$group %in% g], na.rm = T)})
+    }
+    bases <- output_sum('bases_pass')
     #print(selected)
-    myvalue <- paste0(siformat(totaloutput), ' bases')
-    mysubtitle <- HTML(paste0('prom <b>', siformat(promoutput) , '</b> <br>',
-                              'grid <b>', siformat(gridoutput), ' </b> '
+    myvalue <- paste0(siformat(last(bases)), ' bases')
+    mysubtitle <- vb_table(tibble(
+      group = c('prom', 'grid', 'total'),
+      Bases = sapply(bases, siformat),
+      Reads = sapply(output_sum('reads_pass'), siformat)
     ))
     #print(mysubtitle)
     valueBox(
       color = 'green',
-      value = tags$p(myvalue, style = "font-size: 80%; font-weight:normal;"),
+      value = vb_value(myvalue),
       subtitle = mysubtitle,
     )
   })
@@ -427,17 +427,11 @@ server <- function(input, output, session) {
     total_time <- sum(dfpbr_merged_total()$dur, na.rm = T) %>% as.duration() %>% seconds_to_period()
     selected_time <- (input$pb_dates[2] - input$pb_dates[1]) %>% as.duration() %>% seconds_to_period()
     valueBox(
-      value = tags$p(
-        sprintf('%s days %s hours', day(total_time), hour(total_time)), 
-        style = "font-size: 80%; font-weight:normal;"), 
-      subtitle = HTML(
-        paste0(
-          'selected <b>', sprintf('%s days %s hours', day(selected_time), hour(selected_time)), '</b><br>',
-          'Seq2 <b>', sprintf('%s days %s hours', day(seq2_time), hour(seq2_time)), '</b><br>',
-          'Seq2e <b>', sprintf('%s days %s hours', day(seq2e_time), hour(seq2e_time)), '</b><br>',
-          'Revio <b>', sprintf('%s days %s hours', day(revio_time), hour(revio_time)), '</b>'
-        )
-      ),
+      value = vb_value(sprintf('%s days %s hours', day(total_time), hour(total_time))),
+      subtitle = vb_table(tibble(
+        group = c('Seq2', 'Seq2e', 'Revio', 'total', 'selected'),
+        Time = fmt_dh(c(seq2_time, seq2e_time, revio_time, total_time, selected_time))
+      )),
       color = 'green'
     )
   })
@@ -450,18 +444,16 @@ server <- function(input, output, session) {
     selected_time <- (input$pb_dates[2] - input$pb_dates[1]) %>% as.duration() %>% seconds_to_period()
     
     total_usage <- paste0(round(total_time/selected_time*100, 0), ' % usage')
-    seq2_usage <- paste0(round(seq2_time/selected_time*100, 0), ' %')
-    seq2e_usage <- paste0(round(seq2e_time/selected_time*100, 0), ' %')
-    revio_usage <- paste0(round(revio_time/selected_time*100, 0), ' %')
-    runscount <- length(dfpbr()$run_uniqueId %>% unique())
-    cellscount <- length(dfpbr()$coll_uniqueId %>% unique())
-    
-    valueBox(value = tags$p(total_usage, style = "font-size: 80%; font-weight:normal;"),
-             subtitle = HTML(paste0(
-               '<b>', runscount, '</b> runs <b>', cellscount, '</b> cells <br>',
-               'Seq2 <b>' , seq2_usage, '</b><br>',
-               'Seq2e <b>', seq2e_usage,'</b><br>',
-               'Revio <b>', revio_usage
+    groups <- list('Sequel2', 'Sequel2e', 'Revio', unique(dfpbr()$group)) # last is total
+    runs <- sapply(groups, function(g) {n_distinct(dfpbr()$run_uniqueId[dfpbr()$group %in% g])})
+    cells <- sapply(groups, function(g) {n_distinct(dfpbr()$coll_uniqueId[dfpbr()$group %in% g])})
+
+    valueBox(value = vb_value(total_usage),
+             subtitle = vb_table(tibble(
+               group = c('Seq2', 'Seq2e', 'Revio', 'total'),
+               Usage = paste0(round(c(seq2_time, seq2e_time, revio_time, total_time)/selected_time*100, 0), ' %'),
+               Runs = runs,
+               Cells = cells
              )),
              color = 'green')
   })
@@ -499,35 +491,38 @@ server <- function(input, output, session) {
       summarise(smrtcells = length(unique(coll_uniqueId)))
     
     myvalue <- paste0(sum(cellcounts$smrtcells, na.rm = T), ' smrtcells')
+    instruments <- c('Sequel', 'Sequel2', 'Sequel2e', 'Revio')
     valueBox(
       color = 'green',
-      value = tags$p(myvalue, style = "font-size: 80%; font-weight:normal;"),
-      subtitle = HTML(paste0(
-        'Sequel <b>', cellcounts$smrtcells[cellcounts$instrumentType == 'Sequel'], '</b> <br>',
-        'Sequel2 <b>', cellcounts$smrtcells[cellcounts$instrumentType == 'Sequel2'], '</b> <br>',
-        'Sequel2e <b>', cellcounts$smrtcells[cellcounts$instrumentType == 'Sequel2e'], '</b> <br>',
-        'Revio <b>', cellcounts$smrtcells[cellcounts$instrumentType == 'Revio']
+      value = vb_value(myvalue),
+      subtitle = vb_table(tibble(
+        group = c('Seq', 'Seq2', 'Seq2e', 'Revio', 'total'),
+        `SMRT cells` = c(
+          sapply(instruments, function(x) {sum(cellcounts$smrtcells[cellcounts$instrumentType == x])}),
+          sum(cellcounts$smrtcells, na.rm = T)
+        )
       ))
     )
   })
   
   output$pb_output <- renderValueBox({
-    seq_output <- sum(dfpbr2()[dfpbr2()$instrumentType == 'Sequel', ]$ccs2.total_number_of_ccs_bases, na.rm = T)
-    seq2_output <- sum(dfpbr2()[dfpbr2()$instrumentType == 'Sequel2', ]$ccs2.total_number_of_ccs_bases, na.rm = T)
-    seq2e_output <- sum(dfpbr2()[dfpbr2()$instrumentType == 'Sequel2e', ]$ccs2.total_number_of_ccs_bases, na.rm = T)
-    revio_output <- sum(dfpbr2()[dfpbr2()$instrumentType == 'Revio', ]$ccs2.total_number_of_ccs_bases, na.rm = T)
-    total_output <- sum(dfpbr2()$ccs2.total_number_of_ccs_bases, na.rm = T)
+    # ccs bases/reads per instrument, last is total
+    groups <- list('Sequel', 'Sequel2', 'Sequel2e', 'Revio', unique(dfpbr2()$instrumentType))
+    output_sum <- function(col) {
+      sapply(groups, function(g) {sum(dfpbr2()[[col]][dfpbr2()$instrumentType %in% g], na.rm = T)})
+    }
+    bases <- output_sum('ccs2.total_number_of_ccs_bases')
     #print(selected)
-    myvalue <- paste0(siformat(total_output), ' bases')
-    mysubtitle <- HTML(paste0('Seq <b>', siformat(seq_output) , '</b> <br>',
-                              'Seq2 <b>', siformat(seq2_output) , '</b> <br>',
-                              'Seq2e <b>', siformat(seq2e_output) , '</b> <br>',
-                              'Revio <b>', siformat(revio_output) , '</b> <br>') 
-                       )
+    myvalue <- paste0(siformat(last(bases)), ' bases')
+    mysubtitle <- vb_table(tibble(
+      group = c('Seq', 'Seq2', 'Seq2e', 'Revio', 'total'),
+      Bases = sapply(bases, siformat),
+      Reads = sapply(output_sum('ccs2.number_of_ccs_reads'), siformat)
+    ))
     #print(mysubtitle)
     valueBox(
       color = 'green',
-      value = tags$p(myvalue, style = "font-size: 80%; font-weight:normal;"),
+      value = vb_value(myvalue),
       subtitle = mysubtitle,
     )
   })

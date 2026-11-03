@@ -21,6 +21,31 @@ library(shinymanager)
 
 siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
 
+# value box headline (value) style
+vb_value <- function(x) {tags$p(x, style = "font-size: 55%; font-weight:normal;")}
+
+# format a lubridate period as e.g. '12d 5h'
+fmt_dh <- function(p) {sprintf('%sd %sh', day(p), hour(p))}
+
+# small table for valueBox subtitles, first column is used as row names, the 'total' row is bold
+vb_table <- function(d) {
+  cell <- 'padding: 1px 6px; text-align: right;'
+  tags$table(
+    style = 'width: 100%; font-size: 120%;',
+    tags$tr(
+      tags$th(''),
+      lapply(names(d)[-1], function(x) tags$th(x, style = paste(cell, 'font-weight: normal; opacity: 0.8;')))
+    ),
+    lapply(seq_len(nrow(d)), function(i) {
+      tags$tr(
+        style = if (d[[1]][i] == 'total') 'font-weight: bold; border-top: 1px solid rgba(255,255,255,0.5);',
+        tags$td(d[[1]][i], style = 'padding: 1px 6px 1px 0;'),
+        lapply(d[i, -1], function(x) tags$td(x, style = cell))
+      )
+    })
+  )
+}
+
 # pb_columns <- c(
 #   'run_uniqueId', 'run_instrumentType', 'run_instrumentName', 'run_status', 
 #   'cell_name', 'cell_well', 'cell_uniqueId', 'cell_status', 'cell_startedAt', 'cell_completedAt', 'cell_runId', 
