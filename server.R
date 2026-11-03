@@ -135,7 +135,9 @@ server <- function(input, output, session) {
   })
   
   dfpbr2 <- reactive({
-    df_pb_output_module()[df_pb_output_module()$run_startedAt >= input$pb_dates2[1] & df_pb_output_module()$run_completedAt <= input$pb_dates2[2], ]
+    # running runs (no run_completedAt) are excluded, otherwise they give all-NA rows
+    d <- df_pb_output_module()
+    d[!is.na(d$run_completedAt) & d$run_startedAt >= input$pb_dates2[1] & d$run_completedAt <= input$pb_dates2[2], ]
   })
   
   pb_output_data <- reactive({

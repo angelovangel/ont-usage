@@ -30,25 +30,23 @@ END {
     n = asort(lenarray); n_f = asort(lenarray_f);
     i = n; j = n_f;
     
-    # Nx pass
-    while (i >= 0) {
-        if (cumsum <= halfsum) {
-            cumsum += lenarray[i]
-            i--
-        } else {
+    # Nx pass - length of the read at which the cumulative sum (longest first) reaches sum * nx
+    while (i >= 1) {
+        cumsum += lenarray[i]
+        if (cumsum >= halfsum) {
             nxvalue = lenarray[i]
             break
         }
+        i--
     }
     # Nx fail
-    while (j >= 0) {
-        if (cumsum_f <= halfsum_f) {
-            cumsum_f += lenarray_f[j]
-            j--
-        } else {
+    while (j >= 1) {
+        cumsum_f += lenarray_f[j]
+        if (cumsum_f >= halfsum_f) {
             nxvalue_f = lenarray_f[j]
             break
         }
+        j--
     }
 
     # file, bases_pass, bases_fail, reads_pass, reads_fail, Nx_pass, Nx_fail, mean_qscore
