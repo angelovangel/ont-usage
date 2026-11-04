@@ -5,6 +5,10 @@
 # rsync -avrm --progress --include='20*/' --include='final_summary*' --exclude='*' prom@promethion.bcl.kaust.edu.sa:/data/ data/prom/
 # rsync -avrm --progress --include='20*/' --include='final_summary*' --exclude='*' grid@gridion.bcl.kaust.edu.sa:/data/ data/grid/
 
+# only one run at a time, overlapping runs append the same files to counts.csv
+exec 9> data/.get-files.lock
+flock -n 9 || { echo "$(date +'%Y-%m-%d %H:%M:%S') === could not get lock, another get-files.sh is running? exiting"; exit 0; }
+
 echo "$(date +'%Y-%m-%d %H:%M:%S') === starting get-files.sh, running rsync ..."
 
 # top-level test/tmp dirs to skip (must come before the includes)
@@ -63,7 +67,10 @@ cat data/counts.csv | cut -f1 -d, > data/seqsum-fromcounts.files
 # get files in seqsum.files NOT present in counts and run script on them
 newfiles=$(grep -vFf data/seqsum-fromcounts.files data/seqsum.files | wc -l)
 echo "found $newfiles new sequencing summary files"
-grep -vFf data/seqsum-fromcounts.files data/seqsum.files | parallel bin/count-seq-summary.sh 0.5 >> data/counts.csv
+grep -vFf data/seqsum-fromcounts.files data/seqsum.files | parallel --joblog data/count.joblog bin/count-seq-summary.sh 0.5 >> data/counts.csv
+
+# failed jobs add no row to counts.csv and are retried on the next run
+echo "failed count jobs (exit code or signal, see data/count.joblog): $(awk -F'\t' 'NR>1 && ($7!=0 || $8!=0)' data/count.joblog | wc -l)"
 
 # dump PacBio data
 echo "$(date +'%Y-%m-%d %H:%M:%S') === running pb-dump.R..."

@@ -15,39 +15,31 @@ qscore=$(head -1 ${2} | sed 's/\t/\n/g' | nl | grep 'mean_qscore_template' | cut
 
 # bases \t reads
 gawk -v nx="${1}" -v a="$pass" -v b="$len" -v c="$qscore" '
-$a == "TRUE" {sum+=$b; count++; qscoresum+=$c; lenarray[idx++] = $b}
-$a == "FALSE" {sum_f+=$b; count_f++; lenarray_f[idx++] = $b}
+# Nx - length of the read at which the cumulative sum (longest first) reaches target
+# hist is read length -> number of reads, so memory depends on distinct lengths, not on reads
+function get_nx(hist, target,    len, cumsum) {
+    PROCINFO["sorted_in"] = "@ind_num_desc"
+    for (len in hist) {
+        cumsum += len * hist[len]
+        if (cumsum >= target) {
+            return len
+        }
+    }
+}
+
+$a == "TRUE" {sum+=$b; count++; qscoresum+=$c; hist[$b]++}
+$a == "FALSE" {sum_f+=$b; count_f++; hist_f[$b]++}
 
 
 END {
     if (qscoresum > 0) {
         meanqscore = qscoresum/count
-    } else { 
+    } else {
         meanqscore = 0
     }
 
-    halfsum = sum * nx; halfsum_f = sum_f * nx;
-    n = asort(lenarray); n_f = asort(lenarray_f);
-    i = n; j = n_f;
-    
-    # Nx pass - length of the read at which the cumulative sum (longest first) reaches sum * nx
-    while (i >= 1) {
-        cumsum += lenarray[i]
-        if (cumsum >= halfsum) {
-            nxvalue = lenarray[i]
-            break
-        }
-        i--
-    }
-    # Nx fail
-    while (j >= 1) {
-        cumsum_f += lenarray_f[j]
-        if (cumsum_f >= halfsum_f) {
-            nxvalue_f = lenarray_f[j]
-            break
-        }
-        j--
-    }
+    nxvalue = get_nx(hist, sum * nx)
+    nxvalue_f = get_nx(hist_f, sum_f * nx)
 
     # file, bases_pass, bases_fail, reads_pass, reads_fail, Nx_pass, Nx_fail, mean_qscore
     printf "%s,%s,%s,%s,%s,%s,%s,%.2f\n", ARGV[1], sum, sum_f, count, count_f, nxvalue, nxvalue_f, meanqscore
