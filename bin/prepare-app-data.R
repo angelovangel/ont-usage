@@ -55,6 +55,8 @@ write.csv(df_pb, file = 'data/pb_dump_processed.csv', row.names = F)
 # ONT data
 df1 <- vroom(processed_files) %>% 
   dplyr::distinct() %>%
+  # drop test runs: CTC flow cells and runs without a sample (sample_id can be NA, keep these)
+  dplyr::filter(!str_detect(coalesce(content, ''), '^CTC'), !sample_id %in% 'no_sample') %>%
   mutate(type = 'range') %>%
   rowwise() %>% 
   mutate(
