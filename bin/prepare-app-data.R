@@ -10,8 +10,8 @@ source('R/global.R')
 
 siformat <- function(x) {system2('bin/siformat.sh', args = x, stdout = T)}
 
-processed_files <- list.files('data', pattern = 'grid.csv|prom.csv', full.names = T, recursive = F)
-count_files <- list.files('data', pattern = 'counts.csv', full.names = T, recursive = F)
+processed_files <- list.files('data', pattern = '^(grid|prom)\\.csv$', full.names = T, recursive = F)
+count_files <- list.files('data', pattern = '^counts\\.csv$', full.names = T, recursive = F)
 df_pb <- vroom('data/pb_dump.csv')
 
 pis <- vroom('data/pis.tsv')
