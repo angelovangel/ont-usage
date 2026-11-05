@@ -18,7 +18,7 @@ trap 'rm -f "$stale"' EXIT
 # only summaries referred to by a final_summary, which is written when the run has ended
 awk -F'\t' 'NR>1 && $12!="" {print $12}' data/cache/runs.tsv | sort -u |
 while IFS= read -r key; do
-  stamp=$(stat -c $'%s\t%Y' "data/$key" 2>/dev/null) || continue
+  stamp=$(stat -c $'%s\t%Y' "data/raw/$key" 2>/dev/null) || continue
 
   cached=$(cut -f2-4 "data/cache/counts/$key.tsv" 2>/dev/null)
   [ "$cached" = "$stamp"$'\t'"$version" ] || printf '%s\n' "$key"

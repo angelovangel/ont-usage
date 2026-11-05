@@ -1,7 +1,8 @@
 #!/usr/bin/env Rscript
 
 # prepare data for app from the final_summary rows and the count cache
-# writes to data/app/
+# writes to data/app/, only if the checks below pass
+# usage: build-app-data.R [--force], force publishes despite failed checks, e.g. after removing runs on purpose
 library(vroom)
 library(dplyr)
 library(ivs)
@@ -10,9 +11,9 @@ library(stringr)
 source('R/global.R')
 
 app_dir <- 'data/app'
-pis_file <- 'data/pis.tsv'
-overrides_file <- 'data/run_overrides.tsv'
-pb_file <- 'data/pb_dump.csv'
+pis_file <- 'config/pis.tsv'
+overrides_file <- 'config/run_overrides.tsv'
+pb_file <- 'data/raw/pb_dump.csv'
 
 dir.create(app_dir, showWarnings = F, recursive = T)
 pis <- vroom(pis_file, show_col_types = F)
@@ -133,6 +134,52 @@ publish <- function(x, name) {
   invisible(file.rename(tmp, file.path(app_dir, name)))
 }
 
+# checks before publishing, runs only accumulate so the numbers should not go down
+max_drop <- 0.01 # total pass bases
+max_no_counts <- 0.1 # share of runs
+
+read_previous <- function(name) {
+  f <- file.path(app_dir, name)
+  if (file.exists(f)) { vroom(f, show_col_types = F) }
+}
+
+check_ont <- function(new, prev) {
+  need <- c('id', 'group', 'start', 'end', 'content', 'flowcell_id', 'sample_id', 'pi_name', 'division', 'title', 
+            'bases_pass', 'reads_pass', 'mean_qscore', 'nx_pass', 'style_failed', 'style_qscore', 'style_nx')
+  missing_runs <- new$final_summary[is.na(new$start) | is.na(new$end)]
+  no_counts <- mean(is.na(new$bases_pass))
+  c(
+    if (nrow(new) == 0) 'no ONT runs',
+    if (!all(need %in% names(new))) paste('missing columns:', str_flatten(setdiff(need, names(new)), collapse = ', ')),
+    if (anyDuplicated(new$id) > 0) 'duplicate run ids',
+    if (length(missing_runs) > 0) paste('runs without start or end:', str_flatten(missing_runs, collapse = ', ')),
+    if (no_counts > max_no_counts) paste0(round(no_counts * 100), '% of runs without counts'),
+    if (!is.null(prev) && nrow(new) < nrow(prev)) paste('ONT runs went down:', nrow(prev), 'to', nrow(new)),
+    if (!is.null(prev) && sum(new$bases_pass, na.rm = T) < (1 - max_drop) * sum(prev$bases_pass, na.rm = T)) {
+      paste('total pass bases went down:', sum(prev$bases_pass, na.rm = T), 'to', sum(new$bases_pass, na.rm = T))
+    }
+  )
+}
+
+check_pb <- function(new, prev) {
+  c(
+    if (!all(c('run_uniqueId', 'division', 'pi_name') %in% names(new))) 'missing PacBio columns',
+    if (!is.null(prev) && nrow(new) < nrow(prev)) paste('PacBio rows went down:', nrow(prev), 'to', nrow(new))
+  )
+}
+
+problems <- c(
+  check_ont(df, read_previous('df.csv')), 
+  check_pb(df_pb, read_previous('pb_dump_processed.csv'))
+)
+if (length(problems) > 0) {
+  message('checks failed:\n', paste(' ', problems, collapse = '\n'))
+  if (!'--force' %in% commandArgs(trailingOnly = T)) { quit(status = 1) }
+  message('publishing anyway, --force')
+}
+
 publish(df_pb, 'pb_dump_processed.csv')
+# the app shows this date as PacBio data update, keep it at the time of the dump
+Sys.setFileTime(file.path(app_dir, 'pb_dump_processed.csv'), file.mtime(pb_file))
 publish(df, 'df.csv')
 message('data/app/df.csv has ', nrow(df), ' runs')

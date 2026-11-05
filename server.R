@@ -2,7 +2,7 @@
 server <- function(input, output, session) {
   
   #==========user auth ==================================# 
-  credentials <- readRDS('data/credentials.rds')
+  credentials <- readRDS('config/credentials.rds')
   
   res_auth <- secure_server(
     check_credentials = check_credentials(credentials)
@@ -11,7 +11,7 @@ server <- function(input, output, session) {
   
  #### LOAD DATA ####
   # data loaded once for each session
-  df <- vroom('data/df.csv') %>% 
+  df <- vroom('data/app/df.csv') %>% 
     mutate(group = factor(group), division = factor(division)) %>% 
     arrange(desc(start))
   
@@ -20,7 +20,7 @@ server <- function(input, output, session) {
     content = c('GridION', 'PromethION')
   )
   
-  df_pb <- vroom('data/pb_dump_processed.csv') %>%
+  df_pb <- vroom('data/app/pb_dump_processed.csv') %>%
     mutate(instrumentType = factor(instrumentType), 
            group = factor(instrumentType), 
            division = factor(division)
@@ -242,7 +242,7 @@ server <- function(input, output, session) {
     prom_time <- sum(dfr_merged()[dfr_merged()$group == 'prom', ]$dur, na.rm = T) %>% as.duration()
     total_time <- sum(dfr_merged_total()$dur, na.rm = T) %>% as.duration()
     selected_time <- (input$dates[2] - input$dates[1]) %>% as.duration()
-    runs <- function(g) {n_distinct(dfr()$flowcell_id.x[dfr()$group %in% g])}
+    runs <- function(g) {n_distinct(dfr()$flowcell_id[dfr()$group %in% g])}
 
     total_usage <- paste0(round(total_time/selected_time*100, 0), ' % usage')
 
@@ -250,7 +250,7 @@ server <- function(input, output, session) {
              subtitle = vb_table(tibble(
                group = c('prom', 'grid', 'total'),
                Usage = paste0(round(c(prom_time, grid_time, total_time)/selected_time*100, 0), ' %'),
-               Runs = c(runs('prom'), runs('grid'), n_distinct(dfr()$flowcell_id.x))
+               Runs = c(runs('prom'), runs('grid'), n_distinct(dfr()$flowcell_id))
              )),
              color = 'green')
     
@@ -261,7 +261,7 @@ server <- function(input, output, session) {
       dfr() %>%
       #dplyr::filter(sample_id %in% input$sampleids) %>%
       mutate(start_date = as.Date(start)) %>%
-      dplyr::select(c('start_date', 'id', 'flowcell_id.x','pi_name', 'division', 'group', 'sample_id', 
+      dplyr::select(c('start_date', 'id', 'flowcell_id','pi_name', 'division', 'group', 'sample_id', 
                       'reads_pass', 'bases_pass', 'mean_qscore', 'nx_pass'))
     
     datatable(mydata, 

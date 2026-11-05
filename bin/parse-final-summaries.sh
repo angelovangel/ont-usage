@@ -9,7 +9,7 @@ tmp=$(mktemp data/.runs.XXXXXX)
 trap 'rm -f "$tmp"' EXIT
 
 # empty final_summary files are from test/tmp directories
-mapfile -t files < <(find data/prom data/grid -type f -name '*final_summary*.txt' -size +0 | sort)
+mapfile -t files < <(find data/raw/prom data/raw/grid -type f -name '*final_summary*.txt' -size +0 | sort)
 [ "${#files[@]}" -gt 0 ] || { echo "ERROR: no final_summary files found"; exit 1; }
 
 gawk -v OFS='\t' '
@@ -25,9 +25,9 @@ BEGINFILE { delete f }
   if (eq) f[substr($0, 1, eq - 1)] = substr($0, eq + 1)
 }
 ENDFILE {
-  # data/<group>/<relative dir>/<file>
+  # data/raw/<group>/<relative dir>/<file>
   rel = FILENAME
-  sub(/^data\//, "", rel)
+  sub(/^data\/raw\//, "", rel)
   dir = rel
   sub(/\/[^\/]*$/, "", dir)
   group = rel

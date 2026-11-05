@@ -9,7 +9,7 @@
 # key size mtime version bases_pass bases_fail reads_pass reads_fail nx_pass nx_fail mean_qscore
 
 key="$1"
-src="data/$key"
+src="data/raw/$key"
 cache="data/cache/counts/$key.tsv"
 
 # stat before counting, if the file changes meanwhile the next run sees it as stale

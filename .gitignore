@@ -4,4 +4,6 @@ data
 .Rproj.user
 logs
 .Renviron
+config/*
+!config/*.example.tsv
 

@@ -13,7 +13,8 @@ while IFS= read -r line; do
   key="${path#data/}"
   cache="data/cache/counts/$key.tsv"
   if [ -e "$cache" ]; then existing=$((existing + 1)); continue; fi
-  if ! stamp=$(stat -c $'%s\t%Y' "$path" 2>/dev/null); then
+  # before or after bin/migrate-layout.sh
+  if ! stamp=$(stat -c $'%s\t%Y' "data/raw/$key" 2>/dev/null || stat -c $'%s\t%Y' "data/$key" 2>/dev/null); then
     echo "no file for row: $path"
     nofile=$((nofile + 1))
     continue

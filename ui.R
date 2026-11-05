@@ -3,9 +3,9 @@ ui <- dashboardPage(
   header = dashboardHeader(title = 'TGS machine usage (BCL)', titleWidth = 350,
                            dropdownMenu(type = 'notifications', 
                                         notificationItem(
-                                          text = paste0('ONT data update: ', file.mtime('data/df.csv'))),
+                                          text = paste0('ONT data update: ', file.mtime('data/app/df.csv'))),
                                         notificationItem(
-                                          text = paste0('PB data update: ', file.mtime('data/pb_dump.csv')))
+                                          text = paste0('PB data update: ', file.mtime('data/app/pb_dump_processed.csv')))
                            )
   ),
   sidebar = dashboardSidebar(disable = T), 
