@@ -76,10 +76,11 @@ counts <- vroom(
     ~ if_else(count_status == 'counted', coalesce(.x, 0), NA_real_)
     ))
 
-# one row per run. The same run can be in two directories (e.g. encrypted_ copy), prefer the one with counts
+# one row per run. The same run can be in two directories (e.g. encrypted_ copy), keep the one with the most
+# pass bases, the others are partial copies. Runs without counts come last
 runs_counts <- runs %>%
   left_join(counts, by = c('seq_summary_key' = 'key')) %>%
-  arrange(is.na(bases_pass), final_summary)
+  arrange(desc(bases_pass), final_summary)
 
 copies <- runs_counts %>% group_by(run_id) %>% dplyr::filter(n() > 1) %>% ungroup()
 differ <- copies %>% group_by(run_id) %>% dplyr::filter(n_distinct(bases_pass, na.rm = T) > 1) %>% ungroup()
@@ -88,7 +89,7 @@ if (nrow(differ) > 0) { message(paste('  ', differ$final_summary, differ$bases_p
 
 runs_counts <- runs_counts %>% distinct(run_id, .keep_all = T)
 
-# PI comes from protocol_group_id, run_overrides.tsv is for runs where it can't be read from there
+# PI comes from protocol_group_id, then the directory names, run_overrides.tsv is for runs where it is in neither
 if (file.exists(overrides_file)) {
   overrides <- vroom(overrides_file, delim = '\t', col_types = cols(.default = col_character())) %>%
     dplyr::select(run_id, pi_override = pi)
@@ -104,7 +105,10 @@ df <- runs_counts %>%
     type = 'range',
     id = run_id,
     flowcell_id = str_c(content, "_", str_extract(string = run_id, pattern = "^[a-z0-9]{8}(?=-)")), # gives e.g. FAR33076_074e9094
-    px = str_extract(string = protocol_group_id, pattern = "(?<![A-Za-z0-9])P[0-9]{1,2}[PU][0-9]{1,2}"),
+    px = coalesce(
+      str_extract(string = protocol_group_id, pattern = "(?<![A-Za-z0-9])P[0-9]{1,2}[PU][0-9]{1,2}"),
+      str_extract(string = final_summary, pattern = "(?<![A-Za-z0-9])P[0-9]{1,2}[PU][0-9]{1,2}")
+      ),
     pi = coalesce(pi_override, str_extract(string = px, pattern = "P[0-9]{1,2}")), # PI only to join to pis
     ratio = if_else(bases_pass > 0, bases_fail/bases_pass, NA_real_),
     style_failed = paste0('background-color: ', my_temp_color(ratio, 1, 0), ';'),

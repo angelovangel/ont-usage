@@ -8,8 +8,8 @@ mkdir -p data/cache
 tmp=$(mktemp data/.runs.XXXXXX)
 trap 'rm -f "$tmp"' EXIT
 
-# empty final_summary files are from test/tmp directories
-mapfile -t files < <(find data/raw/prom data/raw/grid -type f -name '*final_summary*.txt' -size +0 | sort)
+# empty final_summary files are from test/tmp directories, ._ files are macOS metadata
+mapfile -t files < <(find data/raw/prom data/raw/grid -type f -name '*final_summary*.txt' ! -name '._*' -size +0 | sort)
 [ "${#files[@]}" -gt 0 ] || { echo "ERROR: no final_summary files found"; exit 1; }
 
 gawk -v OFS='\t' '
