@@ -3,6 +3,11 @@
 # pass a ONT sequencing summary file and return pass/fail bases, reads and Nx (pass only)
 # usage
 # count-seq-summary.sh nx file
+# count-seq-summary.sh --version
+
+# bump when the output for the same file changes, this makes the count cache recount every file
+COUNT_VERSION=1
+[ "$1" = "--version" ] && { echo "$COUNT_VERSION"; exit 0; }
 
 # get col index as they are not very consistent
 pass=$(head -1 ${2} | sed 's/\t/\n/g' | nl | grep 'passes_filtering' | cut -f 1)

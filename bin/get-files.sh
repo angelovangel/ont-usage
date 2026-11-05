@@ -58,19 +58,7 @@ rsync -avm --progress \
 nanopore@mover.ibex.kaust.edu.sa:/encrypted0/biocorelab/Genomics/RawData/GridION/ data/grid/
 
 echo "$(date +'%Y-%m-%d %H:%M:%S') === rsync done, will update data/counts.csv ..."
-# find all sequencing summary files:
-find data -type f -name '*sequencing_summary*' > data/seqsum.files
-
-# get the sequencing summary files that are already in counts.csv
-cat data/counts.csv | cut -f1 -d, > data/seqsum-fromcounts.files
-
-# get files in seqsum.files NOT present in counts and run script on them
-newfiles=$(grep -vFf data/seqsum-fromcounts.files data/seqsum.files | wc -l)
-echo "found $newfiles new sequencing summary files"
-grep -vFf data/seqsum-fromcounts.files data/seqsum.files | parallel --joblog data/count.joblog bin/count-seq-summary.sh 0.5 >> data/counts.csv
-
-# failed jobs add no row to counts.csv and are retried on the next run
-echo "failed count jobs (exit code or signal, see data/count.joblog): $(awk -F'\t' 'NR>1 && ($7!=0 || $8!=0)' data/count.joblog | wc -l)"
+bin/update-counts.sh || { echo "$(date +'%Y-%m-%d %H:%M:%S') === update-counts.sh failed, exiting"; exit 1; }
 
 # dump PacBio data
 echo "$(date +'%Y-%m-%d %H:%M:%S') === running pb-dump.R..."
