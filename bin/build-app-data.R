@@ -67,7 +67,9 @@ counts <- vroom(
                 'reads_pass', 'reads_fail', 'nx_pass', 'nx_fail', 'mean_qscore'),
   col_types = cols(key = col_character(), .default = col_double())
   ) %>%
-  dplyr::select(-size, -mtime, -version)
+  dplyr::select(-size, -mtime, -version) %>%
+  # a row means the file was counted, blank values are zero (no reads, or no pass reads)
+  mutate(across(c(bases_pass, bases_fail, reads_pass, reads_fail, nx_pass, nx_fail), ~ coalesce(.x, 0)))
 
 # one row per run. The same run can be in two directories (e.g. encrypted_ copy), prefer the one with counts
 runs_counts <- runs %>%
@@ -99,17 +101,17 @@ df <- runs_counts %>%
     flowcell_id = str_c(content, "_", str_extract(string = run_id, pattern = "^[a-z0-9]{8}(?=-)")), # gives e.g. FAR33076_074e9094
     px = str_extract(string = protocol_group_id, pattern = "(?<![A-Za-z0-9])P[0-9]{1,2}[PU][0-9]{1,2}"),
     pi = coalesce(pi_override, str_extract(string = px, pattern = "P[0-9]{1,2}")), # PI only to join to pis
-    ratio = bases_fail/bases_pass,
+    ratio = if_else(bases_pass > 0, bases_fail/bases_pass, NA_real_),
     style_failed = paste0('background-color: ', my_temp_color(ratio, 1, 0), ';'),
     style_qscore = paste0('background-color: ', my_temp_color(mean_qscore, 0, 22), ';'),
     style_nx = paste0('background-color: ', my_temp_color(nx_pass, 0, 30000), ';')
     ) %>%
   dplyr::select(-pi_override) %>%
   left_join(pis, by = 'pi') %>%
-  mutate(title = if_else(
-    is.na(bases_pass),
-    'no counts',
-    paste0(
+  mutate(title = case_when(
+    is.na(bases_pass) ~ 'no counts',
+    bases_pass == 0 ~ paste0('no pass reads | ', siformat(coalesce(bases_fail, 0)), ' failed bases'),
+    TRUE ~ paste0(
       siformat(coalesce(bases_pass, 0)), ' bases | ',
       siformat(coalesce(reads_pass, 0)), ' reads | ',
       round(ratio * 100, 0), '% failed | ',
