@@ -15,8 +15,13 @@ len=$(head -1 ${2} | sed 's/\t/\n/g' | nl | grep 'sequence_length_template' | cu
 qscore=$(head -1 ${2} | sed 's/\t/\n/g' | nl | grep 'mean_qscore_template' | cut -f 1)
 #read -r pass len qscore < <(COMMAND)
 # 
+# run without basecalling: this format has no pass/fail, length or qscore columns, so nothing to count. Exit 3
+if [ -z "$pass" ] && [ -z "$len" ] && [ -z "$qscore" ] && head -1 "${2}" | grep -q 'minknow_events'; then
+  exit 3
+fi
+
 # exit early if something is wrong with the file
-[ "$pass" -eq "$pass" ] || exit 1
+[ -n "$pass" ] || { echo "no passes_filtering column: ${2}" >&2; exit 1; }
 
 # bases \t reads
 gawk -v nx="${1}" -v a="$pass" -v b="$len" -v c="$qscore" '

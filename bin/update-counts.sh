@@ -36,7 +36,9 @@ csv=$(mktemp data/.counts-csv.XXXXXX)
 trap 'rm -f "$stale" "$tsv" "$csv"' EXIT
 
 find data/cache/counts -type f -name '*.tsv' -print0 | sort -z | xargs -0 -r cat > "$tsv"
-awk -F'\t' -v OFS=',' '{print "data/"$1, $5, $6, $7, $8, $9, $10, $11}' "$tsv" > "$csv"
+# counts.csv has counted files only, runs without basecalling are in counts.tsv
+awk -F'\t' -v OFS=',' '$11!="NA" {print "data/"$1, $5, $6, $7, $8, $9, $10, $11}' "$tsv" > "$csv"
+echo "runs without basecalling: $(awk -F'\t' '$11=="NA"' "$tsv" | wc -l)"
 
 # the cache only grows, fewer rows than before means it was not seeded or something went wrong
 new=$(wc -l < "$csv")

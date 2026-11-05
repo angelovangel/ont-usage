@@ -68,8 +68,13 @@ counts <- vroom(
   col_types = cols(key = col_character(), .default = col_double())
   ) %>%
   dplyr::select(-size, -mtime, -version) %>%
-  # a row means the file was counted, blank values are zero (no reads, or no pass reads)
-  mutate(across(c(bases_pass, bases_fail, reads_pass, reads_fail, nx_pass, nx_fail), ~ coalesce(.x, 0)))
+  # mean_qscore is NA only for runs without basecalling, the file has nothing to count
+  mutate(count_status = if_else(is.na(mean_qscore), 'not_basecalled', 'counted')) %>%
+  # otherwise a row means the file was counted, blank values are zero (no reads, or no pass reads)
+  mutate(across(
+    c(bases_pass, bases_fail, reads_pass, reads_fail, nx_pass, nx_fail),
+    ~ if_else(count_status == 'counted', coalesce(.x, 0), NA_real_)
+    ))
 
 # one row per run. The same run can be in two directories (e.g. encrypted_ copy), prefer the one with counts
 runs_counts <- runs %>%
@@ -109,6 +114,7 @@ df <- runs_counts %>%
   dplyr::select(-pi_override) %>%
   left_join(pis, by = 'pi') %>%
   mutate(title = case_when(
+    count_status %in% 'not_basecalled' ~ 'not basecalled',
     is.na(bases_pass) ~ 'no counts',
     bases_pass == 0 ~ paste0('no pass reads | ', siformat(coalesce(bases_fail, 0)), ' failed bases'),
     TRUE ~ paste0(
@@ -127,7 +133,8 @@ report <- function(x, what) {
 }
 report(df %>% dplyr::filter(is.na(pi)), 'without PI, add to run_overrides.tsv')
 report(df %>% dplyr::filter(!is.na(pi), is.na(pi_name)), 'with a PI not in pis.tsv')
-report(df %>% dplyr::filter(is.na(bases_pass)), 'without counts')
+report(df %>% dplyr::filter(count_status %in% 'not_basecalled'), 'not basecalled')
+report(df %>% dplyr::filter(is.na(count_status)), 'without counts')
 
 # replace in one step, a running app never reads a half-written file
 publish <- function(x, name) {
@@ -149,7 +156,7 @@ check_ont <- function(new, prev) {
   need <- c('id', 'group', 'start', 'end', 'content', 'flowcell_id', 'sample_id', 'pi_name', 'division', 'title', 
             'bases_pass', 'reads_pass', 'mean_qscore', 'nx_pass', 'style_failed', 'style_qscore', 'style_nx')
   missing_runs <- new$final_summary[is.na(new$start) | is.na(new$end)]
-  no_counts <- mean(is.na(new$bases_pass))
+  no_counts <- mean(is.na(new$count_status))
   c(
     if (nrow(new) == 0) 'no ONT runs',
     if (!all(need %in% names(new))) paste('missing columns:', str_flatten(setdiff(need, names(new)), collapse = ', ')),
