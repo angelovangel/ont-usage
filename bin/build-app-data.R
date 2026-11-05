@@ -99,6 +99,14 @@ if (file.exists(overrides_file)) {
   overrides <- tibble(run_id = character(), pi_override = character())
 }
 
+# POUO is a typo for P0U0. Only this spelling, POU1 can't be corrected without knowing the project
+find_px <- function(x) {
+  str_extract(
+    string = str_replace_all(x, "(?<![A-Za-z0-9])POUO", "P0U0"),
+    pattern = "(?<![A-Za-z0-9])P[0-9]{1,2}[PU][0-9]{1,2}"
+    )
+}
+
 df <- runs_counts %>%
   left_join(overrides, by = 'run_id') %>%
   mutate(
@@ -106,8 +114,10 @@ df <- runs_counts %>%
     id = run_id,
     flowcell_id = str_c(content, "_", str_extract(string = run_id, pattern = "^[a-z0-9]{8}(?=-)")), # gives e.g. FAR33076_074e9094
     px = coalesce(
-      str_extract(string = protocol_group_id, pattern = "(?<![A-Za-z0-9])P[0-9]{1,2}[PU][0-9]{1,2}"),
-      str_extract(string = final_summary, pattern = "(?<![A-Za-z0-9])P[0-9]{1,2}[PU][0-9]{1,2}")
+      find_px(protocol_group_id),
+      find_px(final_summary),
+      # plasmid runs without a code are P0
+      if_else(str_detect(final_summary, '(?i)plas?mid'), 'P0U0', NA_character_)
       ),
     pi = coalesce(pi_override, str_extract(string = px, pattern = "P[0-9]{1,2}")), # PI only to join to pis
     ratio = if_else(bases_pass > 0, bases_fail/bases_pass, NA_real_),
