@@ -58,6 +58,7 @@ rsync -avm --progress \
 nanopore@mover.ibex.kaust.edu.sa:/encrypted0/biocorelab/Genomics/RawData/GridION/ data/grid/
 
 echo "$(date +'%Y-%m-%d %H:%M:%S') === rsync done, will update data/counts.csv ..."
+bin/parse-final-summaries.sh || { echo "$(date +'%Y-%m-%d %H:%M:%S') === parse-final-summaries.sh failed, exiting"; exit 1; }
 bin/update-counts.sh || { echo "$(date +'%Y-%m-%d %H:%M:%S') === update-counts.sh failed, exiting"; exit 1; }
 
 # dump PacBio data
@@ -74,5 +75,8 @@ bin/process-files.R -p grid -r data/grid.csv data/grid
 
 echo "$(date +'%Y-%m-%d %H:%M:%S') === process-files.R done, running prepare-app-data.R ..."
 bin/prepare-app-data.R
+
+echo "$(date +'%Y-%m-%d %H:%M:%S') === prepare-app-data.R done, running build-app-data.R ..."
+bin/build-app-data.R
 
 echo "$(date +'%Y-%m-%d %H:%M:%S') === Done"
