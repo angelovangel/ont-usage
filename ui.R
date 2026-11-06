@@ -85,7 +85,14 @@ ui <- dashboardPage(
                    selectizeInput('ont_output_groupby', 'Group data by',
                                   choices = c('Platform' = 'group', 'Division' = 'division'), 
                                   selected = 'platform'),
-                   checkboxInput('ont_output_type', 'Cumulative output', value = FALSE)
+                   checkboxInput('ont_output_type', 'Cumulative output', value = FALSE),
+                   # cumulative flow cells are always new ones, so only for the non-cumulative plot
+                   conditionalPanel(
+                     condition = "!input.ont_output_type && input.output_units == 'fc'",
+                     radioButtons('ont_fc_count', 'Count flow cells', inline = T,
+                                  choices = c('All used' = 'all', 'New only' = 'new'),
+                                  selected = 'all')
+                   )
                  ),
                  
                  box(width = 3, 

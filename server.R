@@ -79,20 +79,25 @@ server <- function(input, output, session) {
     d %>%
       mutate(m = lubridate::floor_date(start, unit = input$time_units)) %>%
       mutate(m = as.Date(m)) %>%
-      # used to count flow cells - count each flow cell (content) only once, at its first use
+      # used to count flow cells - c_new counts each flow cell (content) only once, at its first use
+      # c_all counts it once in each time unit it was used
       arrange(start) %>%
       group_by(group) %>%
-      mutate(c = as.numeric(!duplicated(content))) %>%
+      mutate(c_new = as.numeric(!duplicated(content))) %>%
+      group_by(group, m) %>%
+      mutate(c_all = as.numeric(!duplicated(content))) %>%
       ungroup() %>%
       complete(m = seq.Date(from = min(m, na.rm = T), to = max(m, na.rm = T),
-                            by = input$time_units), group, fill = list(c = 0)
+                            by = input$time_units), group, fill = list(c_new = 0, c_all = 0)
       ) %>%
       group_by(m, group) %>%
-      reframe(fc = sum(c, na.rm = TRUE), # set count to 0 if no bases produced
-              sum_reads = sum(reads_pass, na.rm = TRUE), 
+      reframe(fc_new = sum(c_new, na.rm = TRUE), # set count to 0 if no bases produced
+              fc = if (input$ont_fc_count == 'new') fc_new else sum(c_all, na.rm = TRUE),
+              sum_reads = sum(reads_pass, na.rm = TRUE),
               sum_bases = sum(bases_pass, na.rm = TRUE)) %>%
       group_by(group) %>%
-      mutate(cum_reads = cumsum(sum_reads), cum_bases = cumsum(sum_bases), cum_fc = cumsum(fc)) 
+      # cumulative is always new flow cells, otherwise re-used ones are counted again
+      mutate(cum_reads = cumsum(sum_reads), cum_bases = cumsum(sum_bases), cum_fc = cumsum(fc_new))
   })
   
   ### PB ####
@@ -342,7 +347,7 @@ server <- function(input, output, session) {
       hc_caption(text = paste0(
         'For selected time range: ',
         nrow(dfr2()), ' runs, ',
-        sum(ont_output_data()$fc, na.rm = T), ' flowcells, ',
+        sum(ont_output_data()$fc_new, na.rm = T), ' flowcells, ',
         siformat(sum(ont_output_data()$sum_reads, na.rm = T)), ' reads, ',
         siformat(sum(ont_output_data()$sum_bases, na.rm = T)), ' bases. Only pass reads/bases are considered.')
       )
