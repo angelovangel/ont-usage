@@ -7,7 +7,7 @@
 
 # without this an unseeded cache would recount every file
 if [ -s data/counts.csv ] && [ ! -d data/cache/counts ]; then
-  echo "ERROR: data/counts.csv exists but the cache is empty, run bin/seed-count-cache.sh first"
+  echo "ERROR: data/counts.csv exists but the cache is empty. Restore data/cache/counts, or delete data/counts.csv to recount every file"
   exit 1
 fi
 
@@ -45,7 +45,7 @@ new=$(wc -l < "$csv")
 old=0
 [ -f data/counts.csv ] && old=$(wc -l < data/counts.csv)
 if [ "$new" -lt "$old" ]; then
-  echo "ERROR: cache has $new rows, data/counts.csv has $old. Not replacing it, run bin/seed-count-cache.sh?"
+  echo "ERROR: cache has $new rows, data/counts.csv has $old. Not replacing it, check data/cache/counts"
   exit 1
 fi
 

@@ -80,10 +80,3 @@ Run the pipeline with cron:
 ```
 
 Use `grep -a` on `logs`. Don't pull changes on the server while a run is going.
-
-# Other scripts
-These are not part of the nightly run:
-
-- `bin/compare-app-data.R` compares `data/df.csv` with `data/app/df.csv`
-- `bin/seed-count-cache.sh` and `bin/migrate-layout.sh` were one-time steps for moving to this layout
-- `bin/process-files.R` and `bin/prepare-app-data.R` are the old pipeline, they don't work with the current layout
