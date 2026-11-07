@@ -281,7 +281,8 @@ server <- function(input, output, session) {
                 buttons = c('copy', 'csv', 'excel'),
                 searchHighlight = TRUE,
                 pageLength = 500,
-                autoWidth = TRUE, 
+                autoWidth = TRUE,
+                scrollX = TRUE,
                 dom = 'Btp')
     )
   })
@@ -398,7 +399,8 @@ server <- function(input, output, session) {
               options = list(
                 buttons = c('copy', 'csv', 'excel'),
                 searchHighlight = TRUE,
-                autoWidth = TRUE, 
+                autoWidth = TRUE,
+                scrollX = TRUE,
                 #lengthMenu = list(c(10, 50, -1), c('10', '50', 'All')),
                 info = FALSE,
                 pageLength = 500,
@@ -485,7 +487,8 @@ server <- function(input, output, session) {
                 buttons = c('copy', 'csv', 'excel'),
                 searchHighlight = TRUE,
                 pageLength = 500,
-                autoWidth = TRUE, 
+                autoWidth = TRUE,
+                scrollX = TRUE,
                 dom = 'Btp')
     )
   })
@@ -577,7 +580,8 @@ server <- function(input, output, session) {
               options = list(
                 buttons = c('copy', 'csv', 'excel'),
                 searchHighlight = TRUE,
-                autoWidth = TRUE, 
+                autoWidth = TRUE,
+                scrollX = TRUE,
                 #lengthMenu = list(c(10, 50, -1), c('10', '50', 'All')),
                 info = FALSE,
                 pageLength = 500,
